@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 const { sendModLog } = require('../../utils/modLog');
+const { createCase } = require('../../utils/caseManager');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -26,7 +27,18 @@ module.exports = {
         try {
             const member = await interaction.guild.members.fetch(user.id);
             await member.kick(`${reason} | Kicked by ${interaction.user.tag}`);
-            await interaction.editReply({ content: `✅ Kicked **${user.tag}** (${user.id})\nReason: ${reason}` });
+            
+            // Create case entry
+            const caseId = createCase(
+                interaction.guild.id,
+                user.id,
+                'kick',
+                interaction.user.id,
+                interaction.user.tag,
+                reason
+            );
+            
+            await interaction.editReply({ content: `✅ Kicked **${user.tag}** (${user.id})\nReason: ${reason}\n📋 Case #${caseId}` });
             
             // Send to mod log
             await sendModLog(interaction.guild, 'kick', interaction.user, user, reason);

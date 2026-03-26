@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 const { sendModLog } = require('../../utils/modLog');
+const { createCase } = require('../../utils/caseManager');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -25,7 +26,18 @@ module.exports = {
 
         try {
             await interaction.guild.members.ban(user.id, { reason: `${reason} | Banned by ${interaction.user.tag}` });
-            await interaction.editReply({ content: `✅ Banned **${user.tag}** (${user.id})\nReason: ${reason}` });
+            
+            // Create case entry
+            const caseId = createCase(
+                interaction.guild.id,
+                user.id,
+                'ban',
+                interaction.user.id,
+                interaction.user.tag,
+                reason
+            );
+            
+            await interaction.editReply({ content: `✅ Banned **${user.tag}** (${user.id})\nReason: ${reason}\n📋 Case #${caseId}` });
             
             // Send to mod log
             await sendModLog(interaction.guild, 'ban', interaction.user, user, reason);

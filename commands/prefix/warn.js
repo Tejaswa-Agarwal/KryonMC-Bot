@@ -2,6 +2,7 @@ const { EmbedBuilder } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 const { sendModLog } = require('../utils/modLog');
+const { createCase } = require('../utils/caseManager');
 
 const warningsFile = path.join(__dirname, '..', '..', 'data', 'warnings.json');
 
@@ -66,6 +67,19 @@ module.exports = {
                 .setThumbnail(user.displayAvatarURL())
                 .setFooter({ text: `Warning ID: ${warning.id}` })
                 .setTimestamp();
+
+            // Create case entry
+            const caseId = createCase(
+                guildId,
+                userId,
+                'warn',
+                message.author.id,
+                message.author.tag,
+                reason
+            );
+
+            // Add case ID to embed
+            embed.setFooter({ text: `Warning ID: ${warning.id} | Case #${caseId}` });
 
             message.channel.send({ embeds: [embed] });
 

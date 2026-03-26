@@ -1,4 +1,5 @@
 const { sendModLog } = require('../../utils/modLog');
+const { createCase } = require('../../utils/caseManager');
 
 module.exports = {
     name: 'timeout',
@@ -39,7 +40,19 @@ module.exports = {
             await member.timeout(timeoutDuration, `${reason} | Timed out by ${message.author.tag}`);
             
             const durationStr = formatDuration(timeoutDuration);
-            message.channel.send(`✅ Timed out **${member.user.tag}** for ${durationStr}\nReason: ${reason}`);
+            
+            // Create case entry
+            const caseId = createCase(
+                message.guild.id,
+                userId,
+                'timeout',
+                message.author.id,
+                message.author.tag,
+                reason,
+                { duration: durationStr }
+            );
+            
+            message.channel.send(`✅ Timed out **${member.user.tag}** for ${durationStr}\nReason: ${reason}\n📋 Case #${caseId}`);
             
             // Send to mod log
             await sendModLog(message.guild, 'timeout', message.author, member.user, reason, { '⏱️ Duration': durationStr });

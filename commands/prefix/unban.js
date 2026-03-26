@@ -1,4 +1,5 @@
 const { sendModLog } = require('../utils/modLog');
+const { createCase } = require('../utils/caseManager');
 
 module.exports = {
     name: 'unban',
@@ -27,7 +28,18 @@ module.exports = {
             }
 
             await message.guild.members.unban(userId, `${reason} | Unbanned by ${message.author.tag}`);
-            message.channel.send(`✅ Unbanned **${bannedUser.user.tag}** (${userId})\nReason: ${reason}`);
+            
+            // Create case entry
+            const caseId = createCase(
+                message.guild.id,
+                userId,
+                'unban',
+                message.author.id,
+                message.author.tag,
+                reason
+            );
+            
+            message.channel.send(`✅ Unbanned **${bannedUser.user.tag}** (${userId})\nReason: ${reason}\n📋 Case #${caseId}`);
             
             // Send to mod log
             await sendModLog(message.guild, 'unban', message.author, bannedUser.user, reason);

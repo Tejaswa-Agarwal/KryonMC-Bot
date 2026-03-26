@@ -14,9 +14,10 @@ module.exports = {
                     name: '🛡️ Moderation Commands', 
                     value: '```css\n' +
                            'k!ban • k!unban • k!kick • k!timeout\n' +
-                           'k!purge • k!purgeuser • k!slowmode\n' +
-                           'k!lock • k!unlock • k!warn\n' +
-                           'k!warnings • k!clearwarns • k!setnick\n' +
+                           'k!warn • k!warnings • k!removewarn\n' +
+                           'k!cases • k!removecase\n' +
+                           'k!slowmode • k!lock • k!unlock\n' +
+                           'k!setnick • k!clearwarns\n' +
                            '```',
                     inline: false 
                 },
@@ -33,6 +34,7 @@ module.exports = {
                     name: '⚙️ Admin Commands', 
                     value: '```css\n' +
                            'k!announce • k!say • k!command\n' +
+                           'k!purge • k!purgeuser\n' +
                            '```',
                     inline: false 
                 },

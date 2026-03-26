@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 const { sendModLog } = require('../../utils/modLog');
+const { createCase } = require('../../utils/caseManager');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -46,7 +47,19 @@ module.exports = {
             await member.timeout(timeoutDuration, `${reason} | Timed out by ${interaction.user.tag}`);
             
             const durationStr = formatDuration(timeoutDuration);
-            await interaction.editReply({ content: `✅ Timed out **${user.tag}** for ${durationStr}\nReason: ${reason}` });
+            
+            // Create case entry
+            const caseId = createCase(
+                interaction.guild.id,
+                user.id,
+                'timeout',
+                interaction.user.id,
+                interaction.user.tag,
+                reason,
+                { duration: durationStr }
+            );
+            
+            await interaction.editReply({ content: `✅ Timed out **${user.tag}** for ${durationStr}\nReason: ${reason}\n📋 Case #${caseId}` });
             
             // Send to mod log
             await sendModLog(interaction.guild, 'timeout', interaction.user, user, reason, { '⏱️ Duration': durationStr });
