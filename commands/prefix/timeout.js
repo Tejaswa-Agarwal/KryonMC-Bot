@@ -1,5 +1,3 @@
-const ms = require('ms');
-
 module.exports = {
     name: 'timeout',
     description: 'Timeout a user in the Discord server',
