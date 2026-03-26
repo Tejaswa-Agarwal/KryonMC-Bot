@@ -1,5 +1,5 @@
 const { EmbedBuilder } = require('discord.js');
-const { getUserCases } = require('../utils/caseManager');
+const { getUserCases } = require('../../utils/caseManager');
 
 module.exports = {
     name: 'cases',

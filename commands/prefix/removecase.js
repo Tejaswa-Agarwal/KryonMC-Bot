@@ -1,5 +1,5 @@
 const { EmbedBuilder } = require('discord.js');
-const { removeCase } = require('../utils/caseManager');
+const { removeCase } = require('../../utils/caseManager');
 
 module.exports = {
     name: 'removecase',

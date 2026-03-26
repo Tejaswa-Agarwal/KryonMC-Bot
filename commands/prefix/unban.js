@@ -1,5 +1,5 @@
-const { sendModLog } = require('../utils/modLog');
-const { createCase } = require('../utils/caseManager');
+const { sendModLog } = require('../../utils/modLog');
+const { createCase } = require('../../utils/caseManager');
 
 module.exports = {
     name: 'unban',

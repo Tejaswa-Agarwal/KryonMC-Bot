@@ -1,8 +1,8 @@
 const { EmbedBuilder } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
-const { sendModLog } = require('../utils/modLog');
-const { createCase } = require('../utils/caseManager');
+const { sendModLog } = require('../../utils/modLog');
+const { createCase } = require('../../utils/caseManager');
 
 const warningsFile = path.join(__dirname, '..', '..', 'data', 'warnings.json');
 
