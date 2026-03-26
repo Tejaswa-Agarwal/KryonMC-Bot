@@ -122,7 +122,7 @@ client.on('messageCreate', async (message) => {
     const memberRoles = message.member?.roles.cache;
     
     // Moderation commands require moderator role
-    const moderationCommands = ['ban', 'unban', 'kick', 'timeout', 'purge', 'purgeuser', 'slowmode', 'lock', 'unlock'];
+    const moderationCommands = ['ban', 'unban', 'kick', 'timeout', 'purge', 'purgeuser', 'slowmode', 'lock', 'unlock', 'warn', 'warnings', 'setnick'];
     if (moderationCommands.includes(commandName)) {
         if (MODERATOR_ROLE_IDS.length > 0 && !MODERATOR_ROLE_IDS.some(roleId => memberRoles?.has(roleId))) {
             if (ADMIN_ROLE_IDS.length === 0 || !ADMIN_ROLE_IDS.some(roleId => memberRoles?.has(roleId))) {
@@ -133,7 +133,7 @@ client.on('messageCreate', async (message) => {
     }
     
     // Admin commands require admin role
-    const adminCommands = ['announce', 'command', 'say'];
+    const adminCommands = ['announce', 'command', 'say', 'clearwarns'];
     if (adminCommands.includes(commandName)) {
         if (ADMIN_ROLE_IDS.length > 0 && !ADMIN_ROLE_IDS.some(roleId => memberRoles?.has(roleId))) {
             message.channel.send('You do not have permission to use this command.');
@@ -195,7 +195,7 @@ client.on('interactionCreate', async interaction => {
     const memberRoles = interaction.member?.roles;
     
     // Moderation commands require moderator role
-    const moderationCommands = ['ban', 'unban', 'kick', 'timeout', 'purge', 'purgeuser', 'slowmode', 'lock', 'unlock'];
+    const moderationCommands = ['ban', 'unban', 'kick', 'timeout', 'purge', 'purgeuser', 'slowmode', 'lock', 'unlock', 'warn', 'warnings', 'setnick'];
     if (moderationCommands.includes(interaction.commandName)) {
         if (MODERATOR_ROLE_IDS.length > 0 && !MODERATOR_ROLE_IDS.some(roleId => memberRoles?.cache.has(roleId))) {
             if (ADMIN_ROLE_IDS.length === 0 || !ADMIN_ROLE_IDS.some(roleId => memberRoles?.cache.has(roleId))) {
@@ -206,7 +206,7 @@ client.on('interactionCreate', async interaction => {
     }
     
     // Admin commands require admin role
-    const adminCommands = ['announce', 'command', 'logs', 'say'];
+    const adminCommands = ['announce', 'command', 'logs', 'say', 'clearwarns'];
     if (adminCommands.includes(interaction.commandName)) {
         if (ADMIN_ROLE_IDS.length > 0 && !ADMIN_ROLE_IDS.some(roleId => memberRoles?.cache.has(roleId))) {
             await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
