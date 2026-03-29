@@ -65,6 +65,9 @@ const slashCommands = [];
 fs.readdirSync(slashCommandsPath).forEach(file => {
     if (file.endsWith('.js')) {
         const command = require(path.join(slashCommandsPath, file));
+        if (command?.data && typeof command.data.setDefaultMemberPermissions === 'function') {
+            command.data.setDefaultMemberPermissions(null);
+        }
         client.slashCommands.set(command.data.name, command);
         slashCommands.push(command.data);
     }

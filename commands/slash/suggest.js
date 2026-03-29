@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, PermissionFlagsBits, ChannelType } = require('discord.js');
 const EmbedTemplate = require('../../utils/embedTemplate');
 const { createSuggestion, updateSuggestionStatus, getSuggestionConfig } = require('../../utils/suggestions');
+const { hasAdminPermission } = require('../../utils/permissions');
 const fs = require('fs');
 const path = require('path');
 
@@ -89,7 +90,7 @@ module.exports = {
             }
 
         } else if (subcommand === 'setup') {
-            if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+            if (!hasAdminPermission(interaction.member, interaction.guild.id, interaction.user.id, interaction.guild.ownerId)) {
                 const embed = EmbedTemplate.error('No Permission', 'You need Administrator permission.');
                 await interaction.editReply({ embeds: [embed], ephemeral: true });
                 return;
@@ -115,7 +116,7 @@ module.exports = {
             await interaction.editReply({ embeds: [embed] });
 
         } else if (subcommand === 'approve' || subcommand === 'deny') {
-            if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+            if (!hasAdminPermission(interaction.member, interaction.guild.id, interaction.user.id, interaction.guild.ownerId)) {
                 const embed = EmbedTemplate.error('No Permission', 'You need Administrator permission.');
                 await interaction.editReply({ embeds: [embed], ephemeral: true });
                 return;
@@ -139,7 +140,7 @@ module.exports = {
             }
 
         } else if (subcommand === 'disable') {
-            if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+            if (!hasAdminPermission(interaction.member, interaction.guild.id, interaction.user.id, interaction.guild.ownerId)) {
                 const embed = EmbedTemplate.error('No Permission', 'You need Administrator permission.');
                 await interaction.editReply({ embeds: [embed], ephemeral: true });
                 return;

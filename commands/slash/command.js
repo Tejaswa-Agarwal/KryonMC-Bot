@@ -2,6 +2,7 @@ const { SlashCommandBuilder, PermissionsBitField } = require('discord.js');
 
 const fs = require('fs');
 const path = require('path');
+const { hasAdminPermission } = require('../../utils/permissions');
 
 const commandStatusFile = path.join(__dirname, '..', '..', 'data', 'commandStatus.json');
 let commandStatus = {};
@@ -38,7 +39,7 @@ module.exports = {
                 .setDescription('The command to enable or disable')
                 .setRequired(true)),
     async execute(interaction) {
-        if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+        if (!hasAdminPermission(interaction.member, interaction.guild.id, interaction.user.id, interaction.guild.ownerId)) {
             return interaction.editReply({ content: 'You do not have permission to use this command.', ephemeral: true });
         }
 

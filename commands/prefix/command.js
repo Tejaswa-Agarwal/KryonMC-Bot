@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const { hasAdminPermission } = require('../../utils/permissions');
 
 const commandStatusFile = path.join(__dirname, '..', '..', 'data', 'commandStatus.json');
 let commandStatus = {};
@@ -45,7 +46,7 @@ module.exports = {
     description: 'Enable or disable bot commands and modules',
     usage: '!command <enable|disable> <commandName>',
     async execute(message, args) {
-        if (!message.member.permissions.has('Administrator')) {
+        if (!hasAdminPermission(message.member, message.guild.id, message.author.id, message.guild.ownerId)) {
             return message.reply('You do not have permission to use this command.');
         }
 
