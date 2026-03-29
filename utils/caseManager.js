@@ -1,18 +1,15 @@
-const fs = require('fs');
 const path = require('path');
+const { readJsonFile, writeJsonFile } = require('./jsonFile');
 
 const casesFile = path.join(__dirname, '..', 'data', 'cases.json');
 const ladderFile = path.join(__dirname, '..', 'data', 'punishmentLadder.json');
 
 function loadCases() {
-    if (fs.existsSync(casesFile)) {
-        return JSON.parse(fs.readFileSync(casesFile, 'utf8'));
-    }
-    return {};
+    return readJsonFile(casesFile, {});
 }
 
 function saveCases(cases) {
-    fs.writeFileSync(casesFile, JSON.stringify(cases, null, 2));
+    writeJsonFile(casesFile, cases);
 }
 
 function createCase(guildId, userId, type, moderatorId, moderatorTag, reason, additional = {}) {
@@ -148,14 +145,11 @@ function reviewCaseAppeal(guildId, caseId, reviewerId, approve, note = '') {
 }
 
 function loadLadder() {
-    if (fs.existsSync(ladderFile)) {
-        return JSON.parse(fs.readFileSync(ladderFile, 'utf8'));
-    }
-    return {};
+    return readJsonFile(ladderFile, {});
 }
 
 function saveLadder(ladder) {
-    fs.writeFileSync(ladderFile, JSON.stringify(ladder, null, 2));
+    writeJsonFile(ladderFile, ladder);
 }
 
 function getPunishmentLadder(guildId) {

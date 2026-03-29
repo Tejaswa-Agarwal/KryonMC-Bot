@@ -1,27 +1,17 @@
-const fs = require('fs');
 const path = require('path');
+const { readJsonFile, writeJsonFile } = require('./utils/jsonFile');
 
 const configFilePath = path.join(__dirname, 'data', 'config.json');
 
 let config = {};
 
 function loadConfig() {
-    if (fs.existsSync(configFilePath)) {
-        const rawData = fs.readFileSync(configFilePath);
-        try {
-            config = JSON.parse(rawData);
-        } catch (e) {
-            console.error('Failed to parse config.json:', e);
-            config = {};
-        }
-    } else {
-        config = {};
-    }
+    config = readJsonFile(configFilePath, {});
 }
 
 function saveConfig() {
     try {
-        fs.writeFileSync(configFilePath, JSON.stringify(config, null, 2));
+        writeJsonFile(configFilePath, config);
     } catch (e) {
         console.error('Failed to write config.json:', e);
     }

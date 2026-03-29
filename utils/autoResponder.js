@@ -1,19 +1,14 @@
-const fs = require('fs');
 const path = require('path');
+const { readJsonFile, writeJsonFile } = require('./jsonFile');
 
 const configPath = path.join(__dirname, '..', 'data', 'config.json');
 
 function readConfig() {
-    if (!fs.existsSync(configPath)) return {};
-    try {
-        return JSON.parse(fs.readFileSync(configPath, 'utf8'));
-    } catch (_error) {
-        return {};
-    }
+    return readJsonFile(configPath, {});
 }
 
 function writeConfig(config) {
-    fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+    writeJsonFile(configPath, config);
 }
 
 function getAutoResponderConfig(guildId) {

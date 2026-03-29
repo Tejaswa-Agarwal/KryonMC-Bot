@@ -1,3 +1,9 @@
 {
-  "loggingChannelId": "1369960830925406309"
+  "loggingChannelId": "1369960830925406309",
+  "roleConfig": {
+    "guild-2": {
+      "moderatorRoleId": "mod-role",
+      "adminRoleId": "admin-role"
+    }
+  }
 }

@@ -1,18 +1,15 @@
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
-const fs = require('fs');
 const path = require('path');
+const { readJsonFile, writeJsonFile } = require('./jsonFile');
 
 const configPath = path.join(__dirname, '..', 'data', 'config.json');
 
 function getConfig() {
-    if (fs.existsSync(configPath)) {
-        return JSON.parse(fs.readFileSync(configPath, 'utf8'));
-    }
-    return {};
+    return readJsonFile(configPath, {});
 }
 
 function saveConfig(config) {
-    fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+    writeJsonFile(configPath, config);
 }
 
 function getVerifyConfig(guildId) {

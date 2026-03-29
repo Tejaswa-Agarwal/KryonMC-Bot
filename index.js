@@ -1,9 +1,9 @@
 require('dotenv').config();
-const fs = require('fs');
 const path = require('path');
 const { Client, GatewayIntentBits, Partials, Collection } = require('discord.js');
 const messageCreateEvent = require('./events/messageCreate');
 const { REST, Routes } = require('discord.js');
+const { runStartupChecks } = require('./utils/startupChecks');
 
 const client = new Client({
     intents: [
@@ -28,28 +28,9 @@ const { recordCommandExecution } = require('./utils/performanceTracker');
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
 
 const ALLOWED_ROLE_IDS = (process.env.ALLOWED_ROLE_IDS || '').split(',').map(r => r.trim()).filter(r => r.length > 0);
-const MODERATOR_ROLE_IDS = (process.env.MODERATOR_ROLE_IDS || '').split(',').map(r => r.trim()).filter(r => r.length > 0);
-const ADMIN_ROLE_IDS = (process.env.ADMIN_ROLE_IDS || '').split(',').map(r => r.trim()).filter(r => r.length > 0);
 
 client.prefixCommands = new Collection();
 client.slashCommands = new Collection();
-
-const commandStatusFile = path.join(__dirname, 'data', 'commandStatus.json');
-let commandStatus = {};
-
-let liveStatusChannelId = configStore.get('liveStatusChannelId') || null;
-
-// Load command status from file
-function loadCommandStatus() {
-    if (fs.existsSync(commandStatusFile)) {
-        const rawData = fs.readFileSync(commandStatusFile);
-        commandStatus = JSON.parse(rawData);
-    } else {
-        commandStatus = {};
-    }
-}
-
-loadCommandStatus();
 
 const prefixCommandsPath = path.join(__dirname, 'commands', 'prefix');
 const slashCommandsPath = path.join(__dirname, 'commands', 'slash');
@@ -76,6 +57,15 @@ fs.readdirSync(slashCommandsPath).forEach(file => {
 });
 
 const rest = new REST({ version: '10' }).setToken(DISCORD_TOKEN);
+const commandCooldowns = new Map();
+
+function canUseCommandWithCooldown(scope, cooldownMs = 1500) {
+    const now = Date.now();
+    const last = commandCooldowns.get(scope) || 0;
+    if (now - last < cooldownMs) return false;
+    commandCooldowns.set(scope, now);
+    return true;
+}
 
 async function notifyBotOwnerGuildChange(guild, eventType) {
     try {
@@ -130,6 +120,7 @@ setInterval(() => {
 
 client.once('ready', async () => {
     console.log(`Logged in as ${client.user.tag}!`);
+    runStartupChecks(client);
     await registerCommands();
     // Register messageCreate event for automod
     messageCreateEvent(client);
@@ -286,6 +277,12 @@ client.on('messageCreate', async (message) => {
             return;
         }
     }
+
+    const riskyPrefixCommands = new Set(['ban', 'kick', 'timeout', 'purge', 'warn', 'clearwarns', 'lock', 'unlock', 'el', 'eu']);
+    if (riskyPrefixCommands.has(commandName)) {
+        const allowed = canUseCommandWithCooldown(`prefix:${message.guild.id}:${message.author.id}:${commandName}`, 2000);
+        if (!allowed) return;
+    }
     
     // Admin commands require admin role
     if (adminCommands.includes(commandName)) {
@@ -415,6 +412,15 @@ client.on('interactionCreate', async interaction => {
     if (moderationCommands.includes(interaction.commandName)) {
         if (!hasModeratorPermission(interaction.member, interaction.guild.id, interaction.user.id, interaction.guild.ownerId)) {
             await interaction.reply({ content: '❌ You do not have permission to use this command. Only moderators, admins, server owner, and bot owner can use moderation commands.', ephemeral: true });
+            return;
+        }
+    }
+
+    const riskySlashCommands = new Set(['ban', 'kick', 'timeout', 'purge', 'warn', 'clearwarns', 'lock', 'unlock', 'antinuke', 'backup']);
+    if (riskySlashCommands.has(interaction.commandName)) {
+        const allowed = canUseCommandWithCooldown(`slash:${interaction.guild.id}:${interaction.user.id}:${interaction.commandName}`, 2000);
+        if (!allowed) {
+            await interaction.reply({ content: '⏳ Cooldown active. Try again in a moment.', ephemeral: true });
             return;
         }
     }

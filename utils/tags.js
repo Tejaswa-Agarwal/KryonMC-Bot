@@ -1,15 +1,14 @@
-const fs = require('fs');
 const path = require('path');
+const { readJsonFile, writeJsonFile } = require('./jsonFile');
 
 const tagsPath = path.join(__dirname, '..', 'data', 'tags.json');
 
 function getTags() {
-    if (!fs.existsSync(tagsPath)) return {};
-    return JSON.parse(fs.readFileSync(tagsPath, 'utf8'));
+    return readJsonFile(tagsPath, {});
 }
 
 function saveTags(tags) {
-    fs.writeFileSync(tagsPath, JSON.stringify(tags, null, 2));
+    writeJsonFile(tagsPath, tags);
 }
 
 function getGuildTags(guildId) {

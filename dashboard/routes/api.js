@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const fs = require('fs');
 const path = require('path');
+const { readJsonFile, writeJsonFile } = require('../../utils/jsonFile');
+const { appendConfigAudit } = require('../../utils/configAudit');
 
 const configPath = path.join(__dirname, '..', '..', 'data', 'config.json');
 const casesPath = path.join(__dirname, '..', '..', 'data', 'cases.json');
@@ -12,26 +14,14 @@ const { getGuildPerformance } = require('../../utils/performanceTracker');
 const { createGuildBackup, listGuildBackups, restoreGuildBackup } = require('../../utils/guildBackup');
 const { getGuildTags, setGuildTags } = require('../../utils/tags');
 const { getGuildIncidents, getIncidentStats } = require('../../utils/incidentTracker');
-
-function readJson(file, fallback = {}) {
-  if (!fs.existsSync(file)) return fallback;
-  try {
-    return JSON.parse(fs.readFileSync(file, 'utf8'));
-  } catch {
-    return fallback;
-  }
-}
-
-function writeJson(file, value) {
-  fs.writeFileSync(file, JSON.stringify(value, null, 2));
-}
+const { normalizeGuildConfig } = require('../../utils/configValidator');
 
 function getConfig() {
-  return readJson(configPath, {});
+  return readJsonFile(configPath, {});
 }
 
 function saveConfig(config) {
-  writeJson(configPath, config);
+  writeJsonFile(configPath, config);
 }
 
 function getBotInviteUrl(client, guildId) {
@@ -48,11 +38,24 @@ function canManageGuild(user, guildId) {
   return user?.guilds?.some(g => g.id === guildId && (g.permissions & 0x8) === 0x8);
 }
 
+const apiRateLimiter = new Map();
+function consumeRateLimit(scope, limit, windowMs) {
+  const now = Date.now();
+  const item = apiRateLimiter.get(scope) || { count: 0, resetAt: now + windowMs };
+  if (now > item.resetAt) {
+    item.count = 0;
+    item.resetAt = now + windowMs;
+  }
+  item.count += 1;
+  apiRateLimiter.set(scope, item);
+  return item.count <= limit;
+}
+
 const topLevelGuildSections = new Set(['roleConfig', 'logConfig', 'automodConfig', 'ticketConfig', 'reactionRoleConfig', 'antiNukeConfig', 'securityShieldConfig', 'extraOwnersConfig']);
 
 function getGuildConfigSnapshot(allConfig, guildId) {
   const guildConfig = allConfig[guildId] || {};
-  return {
+  return normalizeGuildConfig({
     ...guildConfig,
     roleConfig: (allConfig.roleConfig || {})[guildId] || guildConfig.roleConfig || {},
     logConfig: (allConfig.logConfig || {})[guildId] || guildConfig.logConfig || {},
@@ -64,7 +67,7 @@ function getGuildConfigSnapshot(allConfig, guildId) {
     reactionRoleConfig: (allConfig.reactionRoleConfig || {})[guildId] || guildConfig.reactionRoleConfig || {},
     autoResponderConfig: guildConfig.autoResponderConfig || {},
     tagsConfig: { tags: getGuildTags(guildId) },
-  };
+  });
 }
 
 function saveGuildSection(allConfig, guildId, section, data) {
@@ -147,14 +150,23 @@ router.post('/guild/:guildId/config', async (req, res) => {
   }
 
   const config = getConfig();
+  const actorId = req.user?.id || 'unknown';
+  const rateKey = `cfg:${guildId}:${actorId}`;
+  if (!consumeRateLimit(rateKey, 25, 60_000)) {
+    res.status(429).json({ error: 'Too many config updates. Please wait and try again.' });
+    return;
+  }
+
   if (section === 'tagsConfig') {
     setGuildTags(guildId, data.tags || {});
+    appendConfigAudit({ guildId, actorId, source: 'dashboard', section, keys: Object.keys(data || {}) });
     res.json({ success: true, config: getGuildConfigSnapshot(config, guildId) });
     return;
   }
   saveGuildSection(config, guildId, section, data);
 
   saveConfig(config);
+  appendConfigAudit({ guildId, actorId, source: 'dashboard', section, keys: Object.keys(data || {}) });
   res.json({ success: true, config: getGuildConfigSnapshot(config, guildId) });
 });
 
@@ -422,7 +434,13 @@ router.post('/guild/:guildId/backups/create', async (req, res) => {
     return;
   }
   const actorId = req.user?.id || null;
+  const rateKey = `bkp:create:${guildId}:${actorId || 'unknown'}`;
+  if (!consumeRateLimit(rateKey, 5, 60_000)) {
+    res.status(429).json({ error: 'Too many backup requests. Please wait.' });
+    return;
+  }
   const backup = createGuildBackup(guildId, actorId);
+  appendConfigAudit({ guildId, actorId: actorId || 'unknown', source: 'dashboard', section: 'backup-create', keys: [] });
   res.json({ success: true, backup });
 });
 
@@ -442,6 +460,7 @@ router.post('/guild/:guildId/backups/restore', async (req, res) => {
     res.status(404).json({ error: 'Backup not found' });
     return;
   }
+  appendConfigAudit({ guildId, actorId: req.user?.id || 'unknown', source: 'dashboard', section: 'backup-restore', keys: [backupId] });
   res.json({ success: true, restored });
 });
 
