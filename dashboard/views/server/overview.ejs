@@ -9,22 +9,117 @@
 <body>
   <main class="container">
     <h1><%= guild.name %></h1>
-    <p>Configure key modules:</p>
+    <p>Configure key modules from the dashboard:</p>
 
     <section class="card">
-      <h2>Quick Config</h2>
-      <p>Use slash commands for full setup while dashboard MVP is active.</p>
-      <ul>
-        <li>Moderation roles: <code>/setuproles</code></li>
-        <li>Automod: <code>/automod</code></li>
-        <li>Logging: <code>/logging setup</code></li>
-        <li>Tickets: <code>/ticket-setup</code></li>
-        <li>Starboard: <code>/starboard setup</code></li>
-        <li>Welcomer: <code>/welcomer setup</code></li>
-      </ul>
+      <h2>Role Configuration</h2>
+      <label>Moderator Role ID</label>
+      <input id="moderatorRoleId" type="text" placeholder="123456789012345678" />
+      <label>Admin Role ID</label>
+      <input id="adminRoleId" type="text" placeholder="123456789012345678" />
+      <button class="btn" onclick="saveSection('roleConfig', { moderatorRoleId: val('moderatorRoleId'), adminRoleId: val('adminRoleId') })">Save Roles</button>
     </section>
 
+    <section class="card">
+      <h2>Welcomer</h2>
+      <label>Enabled</label>
+      <select id="welcomerEnabled"><option value="true">true</option><option value="false">false</option></select>
+      <label>Channel ID</label>
+      <input id="welcomerChannelId" type="text" placeholder="123456789012345678" />
+      <label>Message</label>
+      <textarea id="welcomerMessage" rows="3" placeholder="Welcome {user} to {server}!"></textarea>
+      <button class="btn" onclick="saveSection('welcomerConfig', { enabled: boolVal('welcomerEnabled'), channelId: val('welcomerChannelId'), message: val('welcomerMessage') })">Save Welcomer</button>
+    </section>
+
+    <section class="card">
+      <h2>Starboard</h2>
+      <label>Enabled</label>
+      <select id="starboardEnabled"><option value="true">true</option><option value="false">false</option></select>
+      <label>Channel ID</label>
+      <input id="starboardChannelId" type="text" placeholder="123456789012345678" />
+      <label>Threshold</label>
+      <input id="starboardThreshold" type="number" min="1" max="20" value="3" />
+      <button class="btn" onclick="saveSection('starboardConfig', { enabled: boolVal('starboardEnabled'), channelId: val('starboardChannelId'), threshold: numVal('starboardThreshold') })">Save Starboard</button>
+    </section>
+
+    <section class="card">
+      <h2>Automod (quick)</h2>
+      <label>Enabled</label>
+      <select id="automodEnabled"><option value="true">true</option><option value="false">false</option></select>
+      <button class="btn" onclick="saveSection('automodConfig', { enabled: boolVal('automodEnabled') })">Save Automod</button>
+    </section>
+
+    <section class="card">
+      <h2>Logging (quick)</h2>
+      <label>Moderation Log Channel ID</label>
+      <input id="modLog" type="text" placeholder="123456789012345678" />
+      <label>Message Log Channel ID</label>
+      <input id="messageLog" type="text" placeholder="123456789012345678" />
+      <button class="btn" onclick="saveSection('logConfig', { modLog: val('modLog'), messageLog: val('messageLog') })">Save Logging</button>
+    </section>
+
+    <div id="status" class="card" style="display:none;"></div>
     <a class="btn" href="/dashboard">Back to servers</a>
   </main>
+  <script>
+    const guildId = '<%= guild.id %>';
+    const statusBox = document.getElementById('status');
+
+    function val(id) { return document.getElementById(id).value.trim(); }
+    function boolVal(id) { return document.getElementById(id).value === 'true'; }
+    function numVal(id) { return Number(document.getElementById(id).value); }
+    function setStatus(ok, text) {
+      statusBox.style.display = 'block';
+      statusBox.className = 'card ' + (ok ? 'ok' : 'warning');
+      statusBox.textContent = text;
+    }
+
+    async function saveSection(section, data) {
+      try {
+        const res = await fetch(`/api/guild/${guildId}/config`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ section, data }),
+        });
+        const payload = await res.json();
+        if (!res.ok) throw new Error(payload.error || 'Save failed');
+        setStatus(true, `${section} saved successfully.`);
+      } catch (err) {
+        setStatus(false, err.message);
+      }
+    }
+
+    async function loadConfig() {
+      try {
+        const res = await fetch(`/api/guild/${guildId}/config`);
+        const cfg = await res.json();
+        if (cfg.roleConfig) {
+          document.getElementById('moderatorRoleId').value = cfg.roleConfig.moderatorRoleId || '';
+          document.getElementById('adminRoleId').value = cfg.roleConfig.adminRoleId || '';
+        }
+        if (cfg.welcomerConfig) {
+          document.getElementById('welcomerEnabled').value = String(!!cfg.welcomerConfig.enabled);
+          document.getElementById('welcomerChannelId').value = cfg.welcomerConfig.channelId || '';
+          document.getElementById('welcomerMessage').value = cfg.welcomerConfig.message || '';
+        }
+        if (cfg.starboardConfig) {
+          document.getElementById('starboardEnabled').value = String(!!cfg.starboardConfig.enabled);
+          document.getElementById('starboardChannelId').value = cfg.starboardConfig.channelId || '';
+          document.getElementById('starboardThreshold').value = cfg.starboardConfig.threshold || 3;
+        }
+        if (cfg.automodConfig) {
+          document.getElementById('automodEnabled').value = String(!!cfg.automodConfig.enabled);
+        }
+        if (cfg.logConfig) {
+          document.getElementById('modLog').value = cfg.logConfig.modLog || '';
+          document.getElementById('messageLog').value = cfg.logConfig.messageLog || '';
+        }
+      } catch (err) {
+        setStatus(false, 'Failed to load configuration.');
+      }
+    }
+
+    loadConfig();
+  </script>
 </body>
 </html>

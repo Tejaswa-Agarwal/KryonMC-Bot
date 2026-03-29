@@ -9,6 +9,9 @@
 <body>
   <main class="container">
     <h1>Welcome, <%= user.username %></h1>
+    <% if (typeof noAuthMode !== 'undefined' && noAuthMode) { %>
+      <div class="card warning">⚠️ NO_AUTH mode enabled. Anyone with URL access can manage settings.</div>
+    <% } %>
     <p>Select a server you manage:</p>
     <div id="guilds">Loading...</div>
     <a class="btn secondary" href="/logout">Logout</a>

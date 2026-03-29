@@ -6,7 +6,9 @@ const { Strategy } = require('passport-discord');
 const path = require('path');
 
 const app = express();
-const PORT = process.env.DASHBOARD_PORT || 3000;
+const PORT = process.env.DASHBOARD_PORT || 25575;
+const HOST = process.env.DASHBOARD_HOST || '0.0.0.0';
+const NO_AUTH_MODE = process.env.DASHBOARD_NO_AUTH === 'true';
 
 // Middleware
 app.set('view engine', 'ejs');
@@ -34,7 +36,7 @@ if (process.env.DISCORD_CLIENT_ID && process.env.DISCORD_CLIENT_SECRET) {
     passport.use(new Strategy({
         clientID: process.env.DISCORD_CLIENT_ID,
         clientSecret: process.env.DISCORD_CLIENT_SECRET,
-        callbackURL: process.env.DASHBOARD_CALLBACK || 'http://localhost:3000/callback',
+        callbackURL: process.env.DASHBOARD_CALLBACK || `http://localhost:${PORT}/callback`,
         scope: ['identify', 'guilds']
     }, (accessToken, refreshToken, profile, done) => {
         process.nextTick(() => done(null, profile));
@@ -46,6 +48,10 @@ if (process.env.DISCORD_CLIENT_ID && process.env.DISCORD_CLIENT_SECRET) {
 
 // Auth middleware
 function checkAuth(req, res, next) {
+    if (NO_AUTH_MODE) {
+        req.user = req.user || { username: 'Dashboard Admin', id: 'local-admin', guilds: [] };
+        return next();
+    }
     if (!process.env.DISCORD_CLIENT_ID || !process.env.DISCORD_CLIENT_SECRET) {
         res.status(503).render('error', { user: req.user, message: 'Dashboard OAuth is not configured yet.' });
         return;
@@ -60,6 +66,10 @@ app.get('/', (req, res) => {
 });
 
 app.get('/login', (req, res, next) => {
+    if (NO_AUTH_MODE) {
+        res.redirect('/dashboard');
+        return;
+    }
     if (!process.env.DISCORD_CLIENT_ID || !process.env.DISCORD_CLIENT_SECRET) {
         res.status(503).render('error', { user: req.user, message: 'Dashboard OAuth is not configured yet. Set DISCORD_CLIENT_ID and DISCORD_CLIENT_SECRET.' });
         return;
@@ -69,6 +79,10 @@ app.get('/login', (req, res, next) => {
 
 app.get('/callback',
     (req, res, next) => {
+        if (NO_AUTH_MODE) {
+            res.redirect('/dashboard');
+            return;
+        }
         if (!process.env.DISCORD_CLIENT_ID || !process.env.DISCORD_CLIENT_SECRET) {
             res.redirect('/');
             return;
@@ -85,7 +99,11 @@ app.get('/logout', (req, res) => {
 });
 
 app.get('/dashboard', checkAuth, (req, res) => {
-    res.render('dashboard', { user: req.user });
+    res.render('dashboard', { user: req.user, noAuthMode: NO_AUTH_MODE });
+});
+
+app.get('/health', (_req, res) => {
+    res.json({ ok: true, dashboard: true });
 });
 
 // API Routes
@@ -105,8 +123,11 @@ app.use((req, res) => {
 function startDashboard(client) {
     app.locals.client = client; // Make Discord client available to routes
     
-    app.listen(PORT, () => {
-        console.log(`📊 Dashboard running on http://localhost:${PORT}`);
+    app.listen(PORT, HOST, () => {
+        console.log(`📊 Dashboard running on http://${HOST}:${PORT}`);
+        if (NO_AUTH_MODE) {
+            console.log('⚠️ Dashboard NO_AUTH mode is enabled. Do not use in production.');
+        }
     });
 }
 

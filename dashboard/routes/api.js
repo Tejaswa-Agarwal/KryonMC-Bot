@@ -17,20 +17,32 @@ function saveConfig(config) {
 }
 
 function canManageGuild(user, guildId) {
+  if (process.env.DASHBOARD_NO_AUTH === 'true') return true;
   return user?.guilds?.some(g => g.id === guildId && (g.permissions & 0x8) === 0x8);
 }
 
 router.get('/guilds', async (req, res) => {
   try {
     const client = req.app.locals.client;
-    const guilds = (req.user.guilds || [])
-      .filter(g => (g.permissions & 0x8) === 0x8)
-      .map(g => ({
+    let guilds = [];
+
+    if (process.env.DASHBOARD_NO_AUTH === 'true') {
+      guilds = client.guilds.cache.map(g => ({
         id: g.id,
         name: g.name,
         icon: g.icon,
-        botPresent: client.guilds.cache.has(g.id),
+        botPresent: true,
       }));
+    } else {
+      guilds = (req.user.guilds || [])
+        .filter(g => (g.permissions & 0x8) === 0x8)
+        .map(g => ({
+          id: g.id,
+          name: g.name,
+          icon: g.icon,
+          botPresent: client.guilds.cache.has(g.id),
+        }));
+    }
 
     res.json({ guilds });
   } catch (error) {

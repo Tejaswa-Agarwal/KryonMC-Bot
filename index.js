@@ -193,8 +193,8 @@ client.once('ready', async () => {
         await starboard.handleStarRemove(reaction, user);
     });
     
-    // Start dashboard if configured
-    if (process.env.ENABLE_DASHBOARD === 'true') {
+    // Start dashboard with bot (disable only if explicitly set to false)
+    if (process.env.ENABLE_DASHBOARD !== 'false') {
         const { startDashboard } = require('./dashboard/server');
         startDashboard(client);
     }

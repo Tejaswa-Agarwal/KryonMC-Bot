@@ -1,1 +1,11 @@
-body{font-family:Inter,system-ui,Arial,sans-serif;background:#0f172a;color:#e2e8f0;margin:0} .container{max-width:900px;margin:40px auto;padding:0 20px} .btn{display:inline-block;background:#3b82f6;color:#fff;padding:10px 14px;border-radius:8px;text-decoration:none;margin-right:8px} .btn.secondary{background:#334155} .card{background:#1e293b;border-radius:12px;padding:16px;margin:16px 0} ul{line-height:1.8} code{background:#0b1220;padding:2px 6px;border-radius:6px}
+body{font-family:Inter,system-ui,Arial,sans-serif;background:#0f172a;color:#e2e8f0;margin:0}
+.container{max-width:980px;margin:40px auto;padding:0 20px}
+.btn{display:inline-block;background:#3b82f6;color:#fff;padding:10px 14px;border-radius:8px;text-decoration:none;margin-right:8px;border:none;cursor:pointer}
+.btn.secondary{background:#334155}
+.card{background:#1e293b;border-radius:12px;padding:16px;margin:16px 0}
+.card.ok{border-left:4px solid #22c55e}
+.card.warning{border-left:4px solid #f59e0b}
+ul{line-height:1.8}
+code{background:#0b1220;padding:2px 6px;border-radius:6px}
+label{display:block;margin:8px 0 6px;color:#cbd5e1}
+input,textarea,select{width:100%;padding:10px;border-radius:8px;border:1px solid #334155;background:#0b1220;color:#e2e8f0;box-sizing:border-box;margin-bottom:10px}

@@ -115,6 +115,17 @@ npm start
 Create a `.env` file:
 ```env
 DISCORD_TOKEN=your_bot_token_here
+ENABLE_DASHBOARD=true  # optional, defaults to enabled
+DASHBOARD_HOST=0.0.0.0
+DASHBOARD_PORT=25575
+
+# For production dashboard login
+DISCORD_CLIENT_ID=your_discord_app_client_id
+DISCORD_CLIENT_SECRET=your_discord_app_client_secret
+DASHBOARD_CALLBACK=https://your-domain.com/callback
+
+# Optional bootstrap mode (disable once OAuth works)
+# DASHBOARD_NO_AUTH=true
 ```
 
 ### Initial Setup Commands

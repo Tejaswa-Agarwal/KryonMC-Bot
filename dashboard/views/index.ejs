@@ -10,6 +10,21 @@
   <main class="container">
     <h1>BloxMC Bot Dashboard</h1>
     <p>Manage your server settings with a web dashboard.</p>
+    <section class="card">
+      <h2>Setup</h2>
+      <p>Bind is now <code>0.0.0.0</code> by default. Configure env:</p>
+      <pre><code>DASHBOARD_PORT=25575
+DASHBOARD_HOST=0.0.0.0
+ENABLE_DASHBOARD=true
+
+# Recommended with domain:
+DISCORD_CLIENT_ID=...
+DISCORD_CLIENT_SECRET=...
+DASHBOARD_CALLBACK=https://your-domain.com/callback
+
+# Optional local bootstrap (disable after OAuth setup):
+DASHBOARD_NO_AUTH=true</code></pre>
+    </section>
     <% if (user) { %>
       <a class="btn" href="/dashboard">Open Dashboard</a>
       <a class="btn secondary" href="/logout">Logout</a>
