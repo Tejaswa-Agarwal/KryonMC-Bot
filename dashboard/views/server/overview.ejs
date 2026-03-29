@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= guild.name %> · Axion</title>
   <link rel="icon" type="image/png" href="/img/axion-logo.png">
-  <link rel="stylesheet" href="/css/main.css?v=20260329-6">
+  <link rel="stylesheet" href="/css/main.css?v=20260329-7">
 </head>
 <body>
   <main class="container layout">
@@ -35,14 +35,23 @@
     <section class="main">
       <section class="hero">
         <h1><%= guild.name %> Configuration</h1>
-        <p>Module tabs, analytics, and live activity.</p>
+        <p>Manage your server modules, permissions, and moderation setup.</p>
         <div class="actions"><a class="btn secondary" href="/dashboard">Back</a></div>
       </section>
 
-      <section class="grid cols-3">
-        <div class="card"><h3>Total Cases</h3><div class="metric" id="stat-cases">0</div></div>
-        <div class="card"><h3>Total Warnings</h3><div class="metric" id="stat-warnings">0</div></div>
-        <div class="card"><h3>Open Tickets</h3><div class="metric" id="stat-tickets">0</div></div>
+      <section class="card compact-overview">
+        <div class="compact-overview-item">
+          <span>Total cases</span>
+          <strong id="stat-cases">0</strong>
+        </div>
+        <div class="compact-overview-item">
+          <span>Total warnings</span>
+          <strong id="stat-warnings">0</strong>
+        </div>
+        <div class="compact-overview-item">
+          <span>Open tickets</span>
+          <strong id="stat-tickets">0</strong>
+        </div>
       </section>
 
       <section class="card">
@@ -104,8 +113,8 @@
     </section>
   </main>
 
-  <script src="/js/theme.js?v=20260329-6"></script>
-  <script src="/js/ui.js?v=20260329-6"></script>
+  <script src="/js/theme.js?v=20260329-7"></script>
+  <script src="/js/ui.js?v=20260329-7"></script>
   <script>
     const guildId = '<%= guild.id %>';
 

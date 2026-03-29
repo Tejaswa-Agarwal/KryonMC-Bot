@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Axion Dashboard</title>
   <link rel="icon" type="image/png" href="/img/axion-logo.png">
-  <link rel="stylesheet" href="/css/main.css?v=20260329-6">
+  <link rel="stylesheet" href="/css/main.css?v=20260329-7">
 </head>
 <body>
   <main class="container layout">
@@ -27,8 +27,8 @@
 
     <section class="main">
       <section class="hero">
-        <h1>Axion Control Center</h1>
-        <p>Modern moderation dashboard with themes, live analytics, automod, tickets, reaction roles, and multi-guild controls.</p>
+        <h1>Axion Dashboard</h1>
+        <p>A clean control panel for moderation, safety, and community management across all your servers.</p>
         <div class="actions">
           <% if (user) { %>
             <a class="btn" href="/dashboard">Open Dashboard</a>
@@ -41,16 +41,45 @@
       </section>
 
       <section class="card">
-        <h2>About Axion</h2>
-        <section class="grid cols-3">
-          <div class="card"><h3>Servers</h3><div class="metric"><%= bot?.guildCount || 0 %></div></div>
-          <div class="card"><h3>Slash Commands</h3><div class="metric"><%= bot?.commandCount || 0 %></div></div>
-          <div class="card"><h3>Identity</h3><p class="muted"><%= bot?.tag || 'Axion' %></p></div>
-        </section>
-        <p class="muted" style="margin-top:10px;">Axion supports advanced moderation, case tracking, automod filters, logging, tickets, reaction roles, starboard, verification, tags, and notes.</p>
+        <h2>About <%= bot?.name || 'Axion' %></h2>
+        <p class="muted">Axion is built for real server workflows: fast moderation actions, configurable safety systems, and tools that help staff stay organized.</p>
+        <div class="compact-stats">
+          <div class="compact-stat"><span>Servers</span><strong><%= bot?.guildCount || 0 %></strong></div>
+          <div class="compact-stat"><span>Slash Commands</span><strong><%= bot?.commandCount || 0 %></strong></div>
+          <div class="compact-stat"><span>Bot Tag</span><strong><%= bot?.tag || 'Axion' %></strong></div>
+        </div>
+      </section>
+
+      <section class="grid cols-2">
+        <article class="card">
+          <h3>Core moderation</h3>
+          <p class="muted">Warn, timeout, kick, ban, unban, clear, lock/unlock, and slowmode with proper role-gated permissions and case history tracking.</p>
+        </article>
+        <article class="card">
+          <h3>Server safety</h3>
+          <p class="muted">Automod includes anti-spam, anti-invite, mention filtering, and customizable limits to reduce raids and abuse.</p>
+        </article>
+        <article class="card">
+          <h3>Community systems</h3>
+          <p class="muted">Tickets, reaction roles, starboard, suggestions, verification, tags, AFK, notes, and welcome flows are all available per guild.</p>
+        </article>
+        <article class="card">
+          <h3>Logs and insights</h3>
+          <p class="muted">Track message edits/deletes and moderation activity, then tune your setup from the dashboard without touching config files.</p>
+        </article>
+      </section>
+
+      <section class="card">
+        <h3>Quick start</h3>
+        <ol class="quick-list">
+          <li>Invite Axion to your server.</li>
+          <li>Open the dashboard and select your server.</li>
+          <li>Set moderator/admin roles in the Roles tab.</li>
+          <li>Enable modules like automod, welcomer, and logging.</li>
+        </ol>
       </section>
     </section>
   </main>
-  <script src="/js/theme.js?v=20260329-6"></script>
+  <script src="/js/theme.js?v=20260329-7"></script>
 </body>
 </html>

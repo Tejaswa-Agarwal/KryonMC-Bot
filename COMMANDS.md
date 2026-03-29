@@ -1,4 +1,4 @@
-# BloxMC Bot - Command Reference
+# Axion Bot - Command Reference
 
 Complete documentation for all bot commands and features.
 

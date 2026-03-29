@@ -1,4 +1,4 @@
-# BloxMC Discord Bot
+# Axion Discord Bot
 
 A comprehensive, enterprise-ready Discord moderation and utility bot with advanced features including tickets, reaction roles, logging, and automod systems.
 
@@ -96,8 +96,8 @@ A comprehensive, enterprise-ready Discord moderation and utility bot with advanc
 
 ```bash
 # Clone repository
-git clone https://github.com/Tejaswa-Agarwal/KryonMC-Bot.git
-cd BloxMC-Bot
+git clone https://github.com/Tejaswa-Agarwal/Axion-Bot.git
+cd Axion-Bot
 
 # Install dependencies
 npm install
@@ -408,7 +408,7 @@ This project is open source under the MIT License.
 
 ## 💬 Support
 
-- **Issues**: [GitHub Issues](https://github.com/Tejaswa-Agarwal/KryonMC-Bot/issues)
+- **Issues**: [GitHub Issues](https://github.com/Tejaswa-Agarwal/Axion-Bot/issues)
 - **Questions**: Create a discussion
 - **Documentation**: Check `/help` command in Discord
 

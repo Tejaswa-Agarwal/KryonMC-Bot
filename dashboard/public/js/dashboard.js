@@ -24,17 +24,17 @@
 
     box.className='grid cols-2 fade-in';
     box.innerHTML=guilds.map(g=>`
-      <div class="card">
-        <div class="server-card-title">
+      <article class="card server-card ${g.botPresent?'connected':'pending'}">
+        <div class="server-card-head">
           <h3>${g.name}</h3>
-          <span class="pill ${g.botPresent?'ok':''}">${g.botPresent?'Connected':'Not Connected'}</span>
+          <span class="pill ${g.botPresent?'ok':''}">${g.botPresent?'Connected':'Invite Needed'}</span>
         </div>
-        <p class="muted">${g.botPresent?'Axion is active and configurable.':'Invite Axion to this server to manage it.'}</p>
-        <div class="actions" style="margin-top:10px;">
-          ${g.botPresent?`<a class="btn" href="/server/${g.id}">Open Panel</a>`:'<span class="pill">Awaiting invite</span>'}
+        <p class="muted">${g.botPresent?'Dashboard access is ready. Open settings to configure moderation, automod, and modules.':'Invite Axion first, then return here to configure your server.'}</p>
+        <div class="server-card-actions">
+          ${g.botPresent?`<a class="btn" href="/server/${g.id}">Open Panel</a>`:'<span class="pill">Not connected yet</span>'}
           <a class="btn ghost" target="_blank" rel="noopener" href="${g.inviteUrl || '#'}">Invite Axion</a>
         </div>
-      </div>
+      </article>
     `).join('');
   } catch(e){
     box.innerHTML='<div class="card warning"><h3>Failed to load servers</h3><p class="muted">Try refreshing the page.</p></div>';
