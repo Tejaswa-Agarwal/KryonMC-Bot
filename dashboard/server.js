@@ -10,6 +10,25 @@ const PORT = process.env.DASHBOARD_PORT || 25575;
 const HOST = process.env.DASHBOARD_HOST || '0.0.0.0';
 const NO_AUTH_MODE = process.env.DASHBOARD_NO_AUTH === 'true';
 
+function getBotViewData(client) {
+    const botId = client?.user?.id || process.env.DISCORD_CLIENT_ID || '';
+    const inviteUrl = botId
+        ? `https://discord.com/api/oauth2/authorize?client_id=${botId}&permissions=8&scope=bot%20applications.commands`
+        : '#';
+
+    return {
+        botClientId: botId,
+        inviteUrl,
+        bot: {
+            name: client?.user?.username || 'Axion',
+            tag: client?.user?.tag || 'Axion',
+            guildCount: client?.guilds?.cache?.size || 0,
+            commandCount: client?.slashCommands?.size || 0,
+            avatar: client?.user?.displayAvatarURL?.({ size: 128 }) || '/img/axion-logo.png',
+        },
+    };
+}
+
 // Middleware
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
@@ -62,7 +81,8 @@ function checkAuth(req, res, next) {
 
 // Routes
 app.get('/', (req, res) => {
-    res.render('index', { user: req.user });
+    const viewData = getBotViewData(app.locals.client);
+    res.render('index', { user: req.user, ...viewData });
 });
 
 app.get('/login', (req, res, next) => {
@@ -99,7 +119,8 @@ app.get('/logout', (req, res) => {
 });
 
 app.get('/dashboard', checkAuth, (req, res) => {
-    res.render('dashboard', { user: req.user, noAuthMode: NO_AUTH_MODE });
+    const viewData = getBotViewData(app.locals.client);
+    res.render('dashboard', { user: req.user, noAuthMode: NO_AUTH_MODE, ...viewData });
 });
 
 app.get('/health', (_req, res) => {

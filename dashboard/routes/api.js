@@ -6,6 +6,7 @@ const path = require('path');
 const configPath = path.join(__dirname, '..', '..', 'data', 'config.json');
 const casesPath = path.join(__dirname, '..', '..', 'data', 'cases.json');
 const warningsPath = path.join(__dirname, '..', '..', 'data', 'warnings.json');
+const BOT_INVITE_PERMISSIONS = '8';
 
 function readJson(file, fallback = {}) {
   if (!fs.existsSync(file)) return fallback;
@@ -28,6 +29,15 @@ function saveConfig(config) {
   writeJson(configPath, config);
 }
 
+function getBotInviteUrl(client, guildId) {
+  const botId = client?.user?.id || process.env.DISCORD_CLIENT_ID || '';
+  if (!botId) return '#';
+
+  const base = `https://discord.com/api/oauth2/authorize?client_id=${botId}&permissions=${BOT_INVITE_PERMISSIONS}&scope=bot%20applications.commands`;
+  if (!guildId) return base;
+  return `${base}&guild_id=${guildId}&disable_guild_select=true`;
+}
+
 function canManageGuild(user, guildId) {
   if (process.env.DASHBOARD_NO_AUTH === 'true') return true;
   return user?.guilds?.some(g => g.id === guildId && (g.permissions & 0x8) === 0x8);
@@ -44,6 +54,7 @@ router.get('/guilds', async (req, res) => {
         name: g.name,
         icon: g.icon,
         botPresent: true,
+        inviteUrl: getBotInviteUrl(client, g.id),
       }));
     } else {
       guilds = (req.user.guilds || [])
@@ -53,6 +64,7 @@ router.get('/guilds', async (req, res) => {
           name: g.name,
           icon: g.icon,
           botPresent: client.guilds.cache.has(g.id),
+          inviteUrl: getBotInviteUrl(client, g.id),
         }));
     }
 

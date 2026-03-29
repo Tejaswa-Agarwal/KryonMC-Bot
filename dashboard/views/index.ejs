@@ -28,7 +28,7 @@
     <section class="main">
       <section class="hero">
         <h1>Axion Control Center</h1>
-        <p>Modern moderation dashboard with themes, smooth UI, and fast server control.</p>
+        <p>Modern moderation dashboard with themes, live analytics, automod, tickets, reaction roles, and multi-guild controls.</p>
         <div class="actions">
           <% if (user) { %>
             <a class="btn" href="/dashboard">Open Dashboard</a>
@@ -36,16 +36,18 @@
           <% } else { %>
             <a class="btn" href="/login">Login with Discord</a>
           <% } %>
+          <a class="btn ghost" href="<%= inviteUrl %>" target="_blank" rel="noopener">Invite Axion</a>
         </div>
       </section>
 
       <section class="card">
-        <h2>Setup</h2>
-        <p class="muted">Upload your logo to <code>dashboard/public/img/axion-logo.png</code> to replace placeholder instantly.</p>
-        <pre><code>ENABLE_DASHBOARD=true
-DASHBOARD_HOST=0.0.0.0
-DASHBOARD_PORT=25575
-DASHBOARD_CALLBACK=https://your-domain.com/callback</code></pre>
+        <h2>About Axion</h2>
+        <section class="grid cols-3">
+          <div class="card"><h3>Servers</h3><div class="metric"><%= bot?.guildCount || 0 %></div></div>
+          <div class="card"><h3>Slash Commands</h3><div class="metric"><%= bot?.commandCount || 0 %></div></div>
+          <div class="card"><h3>Identity</h3><p class="muted"><%= bot?.tag || 'Axion' %></p></div>
+        </section>
+        <p class="muted" style="margin-top:10px;">Axion supports advanced moderation, case tracking, automod filters, logging, tickets, reaction roles, starboard, verification, tags, and notes.</p>
       </section>
     </section>
   </main>

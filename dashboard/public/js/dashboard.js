@@ -32,6 +32,7 @@
         <p class="muted">${g.botPresent?'Axion is active and configurable.':'Invite Axion to this server to manage it.'}</p>
         <div class="actions" style="margin-top:10px;">
           ${g.botPresent?`<a class="btn" href="/server/${g.id}">Open Panel</a>`:'<span class="pill">Awaiting invite</span>'}
+          <a class="btn ghost" target="_blank" rel="noopener" href="${g.inviteUrl || '#'}">Invite Axion</a>
         </div>
       </div>
     `).join('');
