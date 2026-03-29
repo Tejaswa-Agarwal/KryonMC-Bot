@@ -121,6 +121,54 @@ module.exports = {
                         .setRequired(true)))
         .addSubcommand(subcommand =>
             subcommand
+                .setName('regex-add')
+                .setDescription('Add a regex filter pattern')
+                .addStringOption(option =>
+                    option.setName('pattern')
+                        .setDescription('Regex pattern (without slashes)')
+                        .setRequired(true)))
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('regex-remove')
+                .setDescription('Remove a regex filter pattern')
+                .addStringOption(option =>
+                    option.setName('pattern')
+                        .setDescription('Regex pattern to remove')
+                        .setRequired(true)))
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('domain-add')
+                .setDescription('Add blocked domain')
+                .addStringOption(option =>
+                    option.setName('domain')
+                        .setDescription('Example: example.com')
+                        .setRequired(true)))
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('domain-remove')
+                .setDescription('Remove blocked domain')
+                .addStringOption(option =>
+                    option.setName('domain')
+                        .setDescription('Example: example.com')
+                        .setRequired(true)))
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('bypass')
+                .setDescription('Set bypass matrix for automod')
+                .addBooleanOption(option =>
+                    option.setName('admins')
+                        .setDescription('Bypass for administrators')
+                        .setRequired(false))
+                .addBooleanOption(option =>
+                    option.setName('moderators')
+                        .setDescription('Bypass for Manage Messages users')
+                        .setRequired(false))
+                .addBooleanOption(option =>
+                    option.setName('bots')
+                        .setDescription('Bypass for bot users')
+                        .setRequired(false)))
+        .addSubcommand(subcommand =>
+            subcommand
                 .setName('config')
                 .setDescription('View current automod configuration'))
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
@@ -272,6 +320,56 @@ module.exports = {
             config.customWords = config.customWords.filter(w => w !== word.toLowerCase());
             setAutomodConfig(interaction.guild.id, config);
             await interaction.editReply({ content: `✅ Removed "${word}" from word filter.` });
+        } else if (subcommand === 'regex-add') {
+            const pattern = interaction.options.getString('pattern');
+            try {
+                new RegExp(pattern, 'i');
+            } catch (_error) {
+                await interaction.editReply({ content: '❌ Invalid regex pattern.', ephemeral: true });
+                return;
+            }
+
+            if (!config.regexFilters) config.regexFilters = [];
+            if (config.regexFilters.includes(pattern)) {
+                await interaction.editReply({ content: '⚠️ Pattern already exists.', ephemeral: true });
+                return;
+            }
+            config.regexFilters.push(pattern);
+            setAutomodConfig(interaction.guild.id, config);
+            await interaction.editReply({ content: `✅ Added regex filter: \`${pattern}\`` });
+        } else if (subcommand === 'regex-remove') {
+            const pattern = interaction.options.getString('pattern');
+            if (!config.regexFilters) config.regexFilters = [];
+            config.regexFilters = config.regexFilters.filter(p => p !== pattern);
+            setAutomodConfig(interaction.guild.id, config);
+            await interaction.editReply({ content: `✅ Removed regex filter: \`${pattern}\`` });
+        } else if (subcommand === 'domain-add') {
+            const domain = interaction.options.getString('domain').toLowerCase().trim();
+            if (!config.blockedDomains) config.blockedDomains = [];
+            if (!config.blockedDomains.includes(domain)) {
+                config.blockedDomains.push(domain);
+                setAutomodConfig(interaction.guild.id, config);
+                await interaction.editReply({ content: `✅ Blocked domain added: \`${domain}\`` });
+            } else {
+                await interaction.editReply({ content: '⚠️ Domain already blocked.', ephemeral: true });
+            }
+        } else if (subcommand === 'domain-remove') {
+            const domain = interaction.options.getString('domain').toLowerCase().trim();
+            if (!config.blockedDomains) config.blockedDomains = [];
+            config.blockedDomains = config.blockedDomains.filter(d => d !== domain);
+            setAutomodConfig(interaction.guild.id, config);
+            await interaction.editReply({ content: `✅ Removed blocked domain: \`${domain}\`` });
+        } else if (subcommand === 'bypass') {
+            const admins = interaction.options.getBoolean('admins');
+            const moderators = interaction.options.getBoolean('moderators');
+            const bots = interaction.options.getBoolean('bots');
+            config.bypass = {
+                admins: admins ?? config.bypass?.admins ?? true,
+                moderators: moderators ?? config.bypass?.moderators ?? true,
+                bots: bots ?? config.bypass?.bots ?? true
+            };
+            setAutomodConfig(interaction.guild.id, config);
+            await interaction.editReply({ content: `✅ Bypass updated.\nAdmins: ${config.bypass.admins}\nModerators: ${config.bypass.moderators}\nBots: ${config.bypass.bots}` });
         } else if (subcommand === 'config') {
             let response = '**🤖 Automod Configuration**\n\n';
             response += `**Status:** ${config.enabled ? '✅ Enabled' : '❌ Disabled'}\n`;
@@ -283,7 +381,10 @@ module.exports = {
             response += `• Anti-Caps: ${config.antiCaps?.enabled ? '✅' : '❌'}${config.antiCaps?.enabled ? ` (${config.antiCaps.threshold}%)` : ''}\n`;
             response += `• Anti-Mass Mention: ${config.antiMassMention?.enabled ? '✅' : '❌'}${config.antiMassMention?.enabled ? ` (max ${config.antiMassMention.max})` : ''}\n`;
             response += `• Anti-Emoji Spam: ${config.antiEmoji?.enabled ? '✅' : '❌'}${config.antiEmoji?.enabled ? ` (max ${config.antiEmoji.max})` : ''}\n`;
-            response += `• Custom Word Filter: ${config.customWords?.length || 0} words\n\n`;
+            response += `• Custom Word Filter: ${config.customWords?.length || 0} words\n`;
+            response += `• Regex Filters: ${config.regexFilters?.length || 0}\n`;
+            response += `• Blocked Domains: ${config.blockedDomains?.length || 0}\n\n`;
+            response += `**Bypass Matrix:** admins=${config.bypass?.admins !== false}, moderators=${config.bypass?.moderators !== false}, bots=${config.bypass?.bots !== false}\n\n`;
             
             if (config.whitelistedChannels && config.whitelistedChannels.length > 0) {
                 response += `**Whitelisted Channels:** ${config.whitelistedChannels.length}\n`;

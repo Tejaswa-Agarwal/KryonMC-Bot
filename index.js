@@ -23,6 +23,7 @@ const { hasModeratorPermission, hasAdminPermission, BOT_OWNER_ID } = require('./
 const antiNuke = require('./utils/antiNuke');
 const securityShield = require('./utils/securityShield');
 const { buildHelpOverviewEmbed, buildHelpModuleEmbed, buildHelpSelectRow } = require('./utils/helpMenu');
+const { recordCommandExecution } = require('./utils/performanceTracker');
 
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
 
@@ -276,7 +277,7 @@ client.on('messageCreate', async (message) => {
 
     // Check permissions based on command category
     const moderationCommands = ['ban', 'unban', 'kick', 'timeout', 'purge', 'slowmode', 'lock', 'unlock', 'warn', 'warnings', 'setnick', 'removecase', 'removewarn', 'snipe', 'editsnipe', 'el', 'eu'];
-    const adminCommands = ['announce', 'command', 'clearwarns', 'logging', 'setuproles', 'setbotname', 'setbotavatar', 'ticket-setup', 'reactionrole', 'automod', 'starboard', 'welcomer', 'verify', 'tags', 'audit', 'antinuke', 'security', 'extraowners'];
+    const adminCommands = ['announce', 'command', 'clearwarns', 'logging', 'setuproles', 'setbotname', 'setbotavatar', 'ticket-setup', 'reactionrole', 'automod', 'starboard', 'welcomer', 'verify', 'tags', 'audit', 'antinuke', 'security', 'extraowners', 'backup'];
     
     // Moderation commands require moderator or admin role
     if (moderationCommands.includes(commandName)) {
@@ -306,10 +307,13 @@ client.on('messageCreate', async (message) => {
     }
 
     try {
+        const startedAt = Date.now();
         await command.execute(message, args);
+        recordCommandExecution(message.guild?.id, 'prefix', commandName, Date.now() - startedAt, true);
     } catch (error) {
         console.error(`Error executing prefix command ${commandName}:`, error);
         message.channel.send('An error occurred while executing the command.');
+        recordCommandExecution(message.guild?.id, 'prefix', commandName, 0, false);
     }
 });
 
@@ -382,6 +386,12 @@ client.on('interactionCreate', async interaction => {
         }
     }
 
+    if (interaction.isModalSubmit() && interaction.customId.startsWith('verify_modal_')) {
+        const { handleVerifyModal } = require('./utils/verification');
+        await handleVerifyModal(interaction);
+        return;
+    }
+
     if (interaction.isStringSelectMenu() && interaction.customId === 'help_module_select') {
         const selected = interaction.values?.[0] || 'overview';
         const embed = selected === 'overview'
@@ -398,8 +408,8 @@ client.on('interactionCreate', async interaction => {
     if (!command) return;
 
     // Check permissions based on command category
-    const moderationCommands = ['ban', 'unban', 'kick', 'timeout', 'purge', 'slowmode', 'lock', 'unlock', 'warn', 'warnings', 'setnick', 'removecase', 'removewarn', 'snipe', 'editsnipe'];
-    const adminCommands = ['announce', 'command', 'logs', 'clearwarns', 'logging', 'setuproles', 'setbotname', 'setbotavatar', 'ticket-setup', 'reactionrole', 'automod', 'starboard', 'welcomer', 'verify', 'tags', 'audit', 'antinuke', 'security', 'extraowners'];
+    const moderationCommands = ['ban', 'unban', 'kick', 'timeout', 'purge', 'slowmode', 'lock', 'unlock', 'warn', 'warnings', 'setnick', 'removecase', 'removewarn', 'snipe', 'editsnipe', 'appeal'];
+    const adminCommands = ['announce', 'command', 'logs', 'clearwarns', 'logging', 'setuproles', 'setbotname', 'setbotavatar', 'ticket-setup', 'reactionrole', 'automod', 'starboard', 'welcomer', 'verify', 'tags', 'audit', 'antinuke', 'security', 'extraowners', 'backup', 'ladder'];
     
     // Moderation commands require moderator or admin role
     if (moderationCommands.includes(interaction.commandName)) {
@@ -429,8 +439,10 @@ client.on('interactionCreate', async interaction => {
     }
 
     try {
+        const startedAt = Date.now();
         await interaction.deferReply();
         await command.execute(interaction);
+        recordCommandExecution(interaction.guild?.id, 'slash', interaction.commandName, Date.now() - startedAt, true);
     } catch (error) {
         console.error(`Error executing slash command ${interaction.commandName}:`, error);
         if (!interaction.replied && !interaction.deferred) {
@@ -438,6 +450,7 @@ client.on('interactionCreate', async interaction => {
         } else if (interaction.deferred) {
             await interaction.editReply({ content: 'An error occurred while processing the command.' });
         }
+        recordCommandExecution(interaction.guild?.id, 'slash', interaction.commandName, 0, false);
     }
 });
 

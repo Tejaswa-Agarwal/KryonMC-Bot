@@ -108,6 +108,9 @@ async function createTicket(guild, user, reason = 'No reason provided') {
             channelId: channel.id,
             createdAt: Date.now(),
             claimedBy: null,
+            claimedAt: null,
+            closedBy: null,
+            closedAt: null,
             reason
         };
         
@@ -136,10 +139,23 @@ async function closeTicket(channel, closedBy) {
     try {
         // Generate transcript
         const messages = await channel.messages.fetch({ limit: 100 });
-        const transcript = messages.reverse().map(m => {
+        const messageLines = messages.reverse().map(m => {
             const timestamp = new Date(m.createdTimestamp).toLocaleString();
             return `[${timestamp}] ${m.author.tag}: ${m.content}${m.attachments.size > 0 ? ` [Attachments: ${m.attachments.map(a => a.url).join(', ')}]` : ''}`;
         }).join('\n');
+
+        const transcriptHeader = [
+            `Ticket #${ticketData.ticketNumber}`,
+            `Guild: ${guild.name} (${guild.id})`,
+            `Opened by: ${ticketData.userId}`,
+            `Claimed by: ${ticketData.claimedBy || 'Unclaimed'}`,
+            `Created at: ${new Date(ticketData.createdAt).toISOString()}`,
+            `Closed by: ${closedBy.tag} (${closedBy.id})`,
+            `Closed at: ${new Date().toISOString()}`,
+            `Reason: ${ticketData.reason || 'No reason provided'}`,
+            '---'
+        ].join('\n');
+        const transcript = `${transcriptHeader}\n${messageLines}`;
 
         // Save transcript
         const transcriptFile = path.join(ticketTranscriptsPath, `ticket-${ticketData.ticketNumber}-${guild.id}.txt`);
@@ -169,6 +185,8 @@ async function closeTicket(channel, closedBy) {
         }
 
         // Remove from open tickets
+        ticketData.closedBy = closedBy.id;
+        ticketData.closedAt = Date.now();
         delete config.openTickets[channel.id];
         setTicketConfig(guild.id, config);
 
@@ -205,6 +223,7 @@ async function claimTicket(channel, claimer) {
     }
 
     ticketData.claimedBy = claimer.id;
+    ticketData.claimedAt = Date.now();
     setTicketConfig(channel.guild.id, config);
 
     const embed = new EmbedBuilder()
@@ -214,7 +233,7 @@ async function claimTicket(channel, claimer) {
 
     await channel.send({ embeds: [embed] });
 
-    return { success: true };
+    return { success: true, claimedBy: claimer.id };
 }
 
 /**

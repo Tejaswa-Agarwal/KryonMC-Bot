@@ -17,6 +17,12 @@ function getGuildTags(guildId) {
     return tags[guildId] || {};
 }
 
+function setGuildTags(guildId, guildTags) {
+    const tags = getTags();
+    tags[guildId] = guildTags || {};
+    saveTags(tags);
+}
+
 function createTag(guildId, name, content, authorId) {
     const tags = getTags();
     if (!tags[guildId]) tags[guildId] = {};
@@ -63,9 +69,9 @@ function useTag(guildId, name) {
 
 module.exports = {
     getGuildTags,
+    setGuildTags,
     createTag,
     editTag,
     deleteTag,
     useTag,
 };
-

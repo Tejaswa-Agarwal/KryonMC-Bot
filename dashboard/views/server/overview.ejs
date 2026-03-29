@@ -73,8 +73,12 @@
           <button class="tab-btn" data-tab-group="modules" data-tab-btn="welcomer">Welcomer</button>
           <button class="tab-btn" data-tab-group="modules" data-tab-btn="starboard">Starboard</button>
           <button class="tab-btn" data-tab-group="modules" data-tab-btn="automod">Automod</button>
+          <button class="tab-btn" data-tab-group="modules" data-tab-btn="rolesmenu">Role Menus</button>
           <button class="tab-btn" data-tab-group="modules" data-tab-btn="antinuke">Anti-Nuke</button>
           <button class="tab-btn" data-tab-group="modules" data-tab-btn="security">Security Shield</button>
+          <button class="tab-btn" data-tab-group="modules" data-tab-btn="responder">Auto Responder</button>
+          <button class="tab-btn" data-tab-group="modules" data-tab-btn="tags">Tags</button>
+          <button class="tab-btn" data-tab-group="modules" data-tab-btn="backup">Backup</button>
           <button class="tab-btn" data-tab-group="modules" data-tab-btn="logging">Logging</button>
           <button class="tab-btn" data-tab-group="modules" data-tab-btn="systems">Systems</button>
         </div>
@@ -125,19 +129,37 @@
         <label>Max Messages (window)</label><input id="automodMaxMessages" type="number" min="2" max="20" value="5" />
         <label>Spam Window Seconds</label><input id="automodTimeWindow" type="number" min="2" max="60" value="5" />
         <label>Anti Invite</label><select id="automodAntiInvite"><option value="true">true</option><option value="false">false</option></select>
+        <label>Blocked Domains (comma separated)</label><textarea id="automodBlockedDomains" rows="2" placeholder="example.com, badsite.net"></textarea>
+        <label>Regex Filters (comma separated patterns)</label><textarea id="automodRegexFilters" rows="2" placeholder="free\\s+nitro, (buy|sell)\\s+account"></textarea>
         <label>Anti Caps</label><select id="automodAntiCaps"><option value="true">true</option><option value="false">false</option></select>
         <label>Caps Threshold %</label><input id="automodCapsThreshold" type="number" min="40" max="100" value="70" />
         <label>Anti Mass Mention</label><select id="automodAntiMention"><option value="true">true</option><option value="false">false</option></select>
         <label>Max Mentions</label><input id="automodMaxMentions" type="number" min="2" max="20" value="5" />
         <label>Anti Emoji Spam</label><select id="automodAntiEmoji"><option value="true">true</option><option value="false">false</option></select>
         <label>Max Emojis</label><input id="automodMaxEmojis" type="number" min="2" max="30" value="10" />
+        <label>Bypass Admins</label><select id="automodBypassAdmins"><option value="true">true</option><option value="false">false</option></select>
+        <label>Bypass Moderators</label><select id="automodBypassModerators"><option value="true">true</option><option value="false">false</option></select>
+        <label>Bypass Bots</label><select id="automodBypassBots"><option value="true">true</option><option value="false">false</option></select>
         <button class="btn" onclick="saveAutomod(this)">Save Automod</button>
+      </section>
+
+      <section class="card tab-panel" data-tab-group="modules" data-tab-panel="rolesmenu">
+        <h2>Role Menus & Buttons Builder</h2>
+        <p class="muted">Edit reaction role mappings as JSON. Format: messageId -> { mode, roles }.</p>
+        <textarea id="reactionRoleConfigJson" rows="10" placeholder='{"123456789012345678":{"mode":"normal","roles":{"✅":"987654321098765432"}}}'></textarea>
+        <button class="btn" onclick="saveRoleMenus(this)">Save Role Menus</button>
       </section>
 
       <section class="card tab-panel" data-tab-group="modules" data-tab-panel="antinuke">
         <h2>Anti-Nuke</h2>
         <p class="muted">Protect against destructive raid/admin abuse like rapid role/channel creation/deletion.</p>
         <label>Enabled</label><select id="antiNukeEnabled"><option value="true">true</option><option value="false">false</option></select>
+        <label>Preset</label>
+        <select id="antiNukePreset">
+          <option value="strict">strict</option>
+          <option value="medium">medium</option>
+          <option value="custom">custom</option>
+        </select>
         <label>Action Threshold</label><input id="antiNukeThreshold" type="number" min="2" max="20" value="3" />
         <label>Window Seconds</label><input id="antiNukeWindow" type="number" min="5" max="120" value="10" />
         <label>Response Action</label>
@@ -146,6 +168,7 @@
           <option value="kick">kick</option>
           <option value="ban">ban</option>
         </select>
+        <label>Apply To Admins</label><select id="antiNukeApplyToAdmins"><option value="false">false</option><option value="true">true</option></select>
         <label>Whitelisted User IDs (comma separated)</label>
         <textarea id="antiNukeUsers" rows="2" placeholder="1234567890, 0987654321"></textarea>
         <label>Whitelisted Role IDs (comma separated)</label>
@@ -177,6 +200,30 @@
         <button class="btn" onclick="saveSecurityShield(this)">Save Security Shield</button>
       </section>
 
+      <section class="card tab-panel" data-tab-group="modules" data-tab-panel="responder">
+        <h2>Auto Responder</h2>
+        <label>Enabled</label><select id="autoResponderEnabled"><option value="true">true</option><option value="false">false</option></select>
+        <label>Responders (JSON array)</label>
+        <textarea id="autoResponderRules" rows="6" placeholder='[{"trigger":"hello","response":"Hi!","mode":"contains"}]'></textarea>
+        <button class="btn" onclick="saveAutoResponder(this)">Save Auto Responder</button>
+      </section>
+
+      <section class="card tab-panel" data-tab-group="modules" data-tab-panel="tags">
+        <h2>Custom Tags</h2>
+        <label>Tags (JSON object: name -> content)</label>
+        <textarea id="tagsMap" rows="8" placeholder='{"rules":"Read #rules first","support":"Open a ticket"}'></textarea>
+        <button class="btn" onclick="saveTagsMap(this)">Save Tags</button>
+      </section>
+
+      <section class="card tab-panel" data-tab-group="modules" data-tab-panel="backup">
+        <h2>Backup & Restore</h2>
+        <p class="muted">Create point-in-time snapshots of this guild configuration and restore when needed.</p>
+        <button class="btn" onclick="createBackup(this)">Create Backup</button>
+        <label>Available Backups</label>
+        <select id="backupIdSelect"></select>
+        <button class="btn secondary" onclick="restoreBackup(this)">Restore Selected Backup</button>
+      </section>
+
       <section class="card tab-panel" data-tab-group="modules" data-tab-panel="logging">
         <h2>Logging</h2>
         <label>Moderation Log Channel</label><select id="modLog"></select>
@@ -189,6 +236,14 @@
         <p class="muted">Enable core systems from one place, then fine-tune them in their dedicated commands.</p>
         <label>Suggestions</label><select id="suggestionsEnabled"><option value="true">true</option><option value="false">false</option></select>
         <label>Verification</label><select id="verificationEnabled"><option value="true">true</option><option value="false">false</option></select>
+        <label>Verification Mode</label>
+        <select id="verificationMode">
+          <option value="button">button</option>
+          <option value="captcha">captcha</option>
+          <option value="human">human-check</option>
+        </select>
+        <label>Human-Check Question</label><input id="verificationQuestion" type="text" placeholder="Type YES to verify." />
+        <label>Human-Check Answer</label><input id="verificationAnswer" type="text" placeholder="YES" />
         <label>Ticket System</label><select id="ticketEnabled"><option value="true">true</option><option value="false">false</option></select>
         <button class="btn" onclick="saveSystems(this)">Save Systems</button>
       </section>
@@ -261,7 +316,14 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               section: 'verifyConfig',
-              data: { enabled: boolVal('verificationEnabled') },
+              data: {
+                enabled: boolVal('verificationEnabled'),
+                mode: val('verificationMode'),
+                humanCheck: {
+                  question: val('verificationQuestion') || 'Type YES to verify.',
+                  answer: val('verificationAnswer') || 'YES'
+                }
+              },
             }),
           }),
           fetch(`/api/guild/${guildId}/config`, {
@@ -297,6 +359,8 @@
         antiInvite: {
           enabled: boolVal('automodAntiInvite'),
         },
+        blockedDomains: csvToArray('automodBlockedDomains').map(v => v.toLowerCase()),
+        regexFilters: csvToArray('automodRegexFilters'),
         antiCaps: {
           enabled: boolVal('automodAntiCaps'),
           threshold: numVal('automodCapsThreshold'),
@@ -310,16 +374,29 @@
           enabled: boolVal('automodAntiEmoji'),
           max: numVal('automodMaxEmojis'),
         },
+        bypass: {
+          admins: boolVal('automodBypassAdmins'),
+          moderators: boolVal('automodBypassModerators'),
+          bots: boolVal('automodBypassBots'),
+        },
       };
       await handleSave(btn, 'automodConfig', payload);
     }
 
     async function saveAntiNuke(btn) {
+      const preset = val('antiNukePreset');
+      const presetProfiles = {
+        strict: { threshold: 2, window: 8, action: 'ban', applyToAdmins: true },
+        medium: { threshold: 3, window: 10, action: 'kick', applyToAdmins: false },
+      };
+      const profile = presetProfiles[preset];
       const payload = {
         enabled: boolVal('antiNukeEnabled'),
-        threshold: numVal('antiNukeThreshold'),
-        intervalMs: numVal('antiNukeWindow') * 1000,
-        action: val('antiNukeAction'),
+        preset,
+        threshold: profile ? profile.threshold : numVal('antiNukeThreshold'),
+        intervalMs: (profile ? profile.window : numVal('antiNukeWindow')) * 1000,
+        action: profile ? profile.action : val('antiNukeAction'),
+        applyToAdmins: profile ? profile.applyToAdmins : boolVal('antiNukeApplyToAdmins'),
         whitelistedUsers: csvToArray('antiNukeUsers'),
         whitelistedRoles: csvToArray('antiNukeRoles'),
       };
@@ -351,6 +428,109 @@
         userIds: csvToArray('extraOwnersUserIds'),
       };
       await handleSave(btn, 'extraOwnersConfig', payload);
+    }
+
+    async function saveAutoResponder(btn) {
+      let responders = [];
+      try {
+        responders = JSON.parse(val('autoResponderRules') || '[]');
+        if (!Array.isArray(responders)) throw new Error('Rules must be an array');
+      } catch (err) {
+        window.axionToast(`Invalid responder JSON: ${err.message}`, 'danger');
+        return;
+      }
+      await handleSave(btn, 'autoResponderConfig', {
+        enabled: boolVal('autoResponderEnabled'),
+        responders
+      });
+    }
+
+    async function saveTagsMap(btn) {
+      let tagsMap = {};
+      try {
+        tagsMap = JSON.parse(val('tagsMap') || '{}');
+        if (typeof tagsMap !== 'object' || Array.isArray(tagsMap)) throw new Error('Tags must be an object');
+      } catch (err) {
+        window.axionToast(`Invalid tags JSON: ${err.message}`, 'danger');
+        return;
+      }
+      const tags = Object.entries(tagsMap).reduce((acc, [name, content]) => {
+        acc[String(name).toLowerCase()] = {
+          content: String(content),
+          authorId: 'dashboard',
+          createdAt: Date.now(),
+          uses: 0,
+        };
+        return acc;
+      }, {});
+      await handleSave(btn, 'tagsConfig', { tags });
+    }
+
+    async function saveRoleMenus(btn) {
+      let payload = {};
+      try {
+        payload = JSON.parse(val('reactionRoleConfigJson') || '{}');
+        if (typeof payload !== 'object' || Array.isArray(payload)) throw new Error('Role menu config must be an object');
+      } catch (err) {
+        window.axionToast(`Invalid role menu JSON: ${err.message}`, 'danger');
+        return;
+      }
+      await handleSave(btn, 'reactionRoleConfig', payload);
+    }
+
+    async function loadBackups() {
+      const select = document.getElementById('backupIdSelect');
+      if (!select) return;
+      try {
+        const res = await fetch(`/api/guild/${guildId}/backups`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to load backups');
+        const backups = data.backups || [];
+        select.innerHTML = backups.length
+          ? backups.map(b => `<option value="${b.id}">${b.id} • ${new Date(b.createdAt).toLocaleString()}</option>`).join('')
+          : '<option value="">No backups found</option>';
+      } catch (err) {
+        window.axionToast(err.message, 'danger');
+      }
+    }
+
+    async function createBackup(btn) {
+      window.axionSetSaving(btn, true);
+      try {
+        const res = await fetch(`/api/guild/${guildId}/backups/create`, { method: 'POST' });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to create backup');
+        window.axionToast(`Backup created: ${data.backup.id}`, 'ok');
+        await loadBackups();
+      } catch (err) {
+        window.axionToast(err.message, 'danger');
+      } finally {
+        window.axionSetSaving(btn, false);
+      }
+    }
+
+    async function restoreBackup(btn) {
+      const backupId = val('backupIdSelect');
+      if (!backupId) {
+        window.axionToast('Select a backup first', 'warning');
+        return;
+      }
+      window.axionSetSaving(btn, true);
+      try {
+        const res = await fetch(`/api/guild/${guildId}/backups/restore`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ backupId }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Restore failed');
+        window.axionToast(`Restored backup: ${backupId}`, 'ok');
+        await loadAll();
+      } catch (err) {
+        window.axionToast(err.message, 'danger');
+      } finally {
+        window.axionSetSaving(btn, false);
+      }
     }
 
     function renderChart(counts) {
@@ -393,6 +573,22 @@
       ].join('');
     }
 
+    function renderPerformance(summary) {
+      const chart = document.getElementById('case-chart');
+      const perf = summary.performance || {};
+      const totals = perf.totals || {};
+      const slowest = perf.slowest || [];
+      const recent = perf.recent || [];
+      const topSlow = slowest.slice(0, 3).map(s => `${s.name}: ${s.avgMs}ms`).join('<br>') || 'No command data yet';
+      const recentFail = recent.filter(r => !r.ok).length;
+      chart.innerHTML = [
+        `<div class="card"><h3>Avg Latency</h3><p class="muted">${totals.avgMs || 0} ms</p></div>`,
+        `<div class="card"><h3>Total Commands</h3><p class="muted">${totals.count || 0}</p></div>`,
+        `<div class="card"><h3>Failures</h3><p class="muted">${totals.failed || 0} (recent: ${recentFail})</p></div>`,
+        `<div class="card"><h3>Slowest Commands</h3><p class="muted">${topSlow}</p></div>`
+      ].join('');
+    }
+
     async function loadAll() {
       try {
         const [metaRes, cfgRes, statsRes, activityRes, summaryRes] = await Promise.all([
@@ -429,16 +625,23 @@
         document.getElementById('automodMaxMessages').value = cfg.automodConfig?.antiSpam?.maxMessages || 5;
         document.getElementById('automodTimeWindow').value = Math.round((cfg.automodConfig?.antiSpam?.timeWindow || 5000) / 1000);
         document.getElementById('automodAntiInvite').value = String(!!cfg.automodConfig?.antiInvite?.enabled);
+        document.getElementById('automodBlockedDomains').value = arrayToCsv(cfg.automodConfig?.blockedDomains || []);
+        document.getElementById('automodRegexFilters').value = arrayToCsv(cfg.automodConfig?.regexFilters || []);
         document.getElementById('automodAntiCaps').value = String(!!cfg.automodConfig?.antiCaps?.enabled);
         document.getElementById('automodCapsThreshold').value = cfg.automodConfig?.antiCaps?.threshold || 70;
         document.getElementById('automodAntiMention').value = String(!!cfg.automodConfig?.antiMassMention?.enabled);
         document.getElementById('automodMaxMentions').value = cfg.automodConfig?.antiMassMention?.max || 5;
         document.getElementById('automodAntiEmoji').value = String(!!cfg.automodConfig?.antiEmoji?.enabled);
         document.getElementById('automodMaxEmojis').value = cfg.automodConfig?.antiEmoji?.max || 10;
+        document.getElementById('automodBypassAdmins').value = String(cfg.automodConfig?.bypass?.admins !== false);
+        document.getElementById('automodBypassModerators').value = String(cfg.automodConfig?.bypass?.moderators !== false);
+        document.getElementById('automodBypassBots').value = String(cfg.automodConfig?.bypass?.bots !== false);
         document.getElementById('antiNukeEnabled').value = String(!!cfg.antiNukeConfig?.enabled);
+        document.getElementById('antiNukePreset').value = cfg.antiNukeConfig?.preset || 'medium';
         document.getElementById('antiNukeThreshold').value = cfg.antiNukeConfig?.threshold || 3;
         document.getElementById('antiNukeWindow').value = Math.round((cfg.antiNukeConfig?.intervalMs || 10000) / 1000);
         document.getElementById('antiNukeAction').value = cfg.antiNukeConfig?.action || 'remove_roles';
+        document.getElementById('antiNukeApplyToAdmins').value = String(!!cfg.antiNukeConfig?.applyToAdmins);
         document.getElementById('antiNukeUsers').value = arrayToCsv(cfg.antiNukeConfig?.whitelistedUsers || []);
         document.getElementById('antiNukeRoles').value = arrayToCsv(cfg.antiNukeConfig?.whitelistedRoles || []);
         document.getElementById('securityEnabled').value = String(!!cfg.securityShieldConfig?.enabled);
@@ -451,8 +654,15 @@
         document.getElementById('securityJoinWindow').value = Math.round((cfg.securityShieldConfig?.joinGuard?.windowMs || 15000) / 1000);
         document.getElementById('securityJoinAction').value = cfg.securityShieldConfig?.joinGuard?.action || 'alert';
         document.getElementById('extraOwnersUserIds').value = arrayToCsv(cfg.extraOwnersConfig?.userIds || []);
+        document.getElementById('autoResponderEnabled').value = String(!!cfg.autoResponderConfig?.enabled);
+        document.getElementById('autoResponderRules').value = JSON.stringify(cfg.autoResponderConfig?.responders || [], null, 2);
+        document.getElementById('tagsMap').value = JSON.stringify(cfg.tagsConfig?.tags || {}, null, 2);
+        document.getElementById('reactionRoleConfigJson').value = JSON.stringify(cfg.reactionRoleConfig || {}, null, 2);
         document.getElementById('suggestionsEnabled').value = String(!!cfg.suggestionConfig?.enabled);
         document.getElementById('verificationEnabled').value = String(!!cfg.verifyConfig?.enabled);
+        document.getElementById('verificationMode').value = cfg.verifyConfig?.mode || 'button';
+        document.getElementById('verificationQuestion').value = cfg.verifyConfig?.humanCheck?.question || 'Type YES to verify.';
+        document.getElementById('verificationAnswer').value = cfg.verifyConfig?.humanCheck?.answer || 'YES';
         document.getElementById('ticketEnabled').value = String(!!cfg.ticketConfig?.enabled);
 
         document.getElementById('stat-cases').textContent = stats.caseCount || 0;
@@ -462,6 +672,8 @@
         renderChart(stats.caseTypeCounts || {});
         renderActivity(activity.activity || []);
         renderHealth(summary || {});
+        renderPerformance(summary || {});
+        await loadBackups();
       } catch (_err) {
         window.axionToast('Failed to load dashboard data', 'warning');
       }

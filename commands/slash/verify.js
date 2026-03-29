@@ -12,7 +12,24 @@ module.exports = {
                 .addRoleOption(option =>
                     option.setName('role')
                         .setDescription('Role to grant when verified')
-                        .setRequired(true)))
+                        .setRequired(true))
+                .addStringOption(option =>
+                    option.setName('mode')
+                        .setDescription('Verification mode')
+                        .setRequired(false)
+                        .addChoices(
+                            { name: 'Button', value: 'button' },
+                            { name: 'Captcha', value: 'captcha' },
+                            { name: 'Human Check', value: 'human' }
+                        ))
+                .addStringOption(option =>
+                    option.setName('question')
+                        .setDescription('Question for human-check mode')
+                        .setRequired(false))
+                .addStringOption(option =>
+                    option.setName('answer')
+                        .setDescription('Expected answer for human-check mode')
+                        .setRequired(false)))
         .addSubcommand(sub =>
             sub.setName('panel')
                 .setDescription('Send verification panel')
@@ -43,15 +60,23 @@ module.exports = {
 
         if (sub === 'setup') {
             const role = interaction.options.getRole('role');
+            const mode = interaction.options.getString('mode') || 'button';
+            const question = interaction.options.getString('question');
+            const answer = interaction.options.getString('answer');
             const current = getVerifyConfig(guildId) || {};
             setVerifyConfig(guildId, {
                 ...current,
                 enabled: true,
                 roleId: role.id,
+                mode,
+                humanCheck: {
+                    question: question || current.humanCheck?.question || 'Type YES to verify.',
+                    answer: answer || current.humanCheck?.answer || 'YES',
+                }
             });
 
             await interaction.editReply({
-                embeds: [EmbedTemplate.success('Verification Configured', `Members will receive ${role} after verifying.`)],
+                embeds: [EmbedTemplate.success('Verification Configured', `Members will receive ${role} after verifying.\nMode: **${mode}**`)],
             });
             return;
         }
@@ -95,8 +120,7 @@ module.exports = {
 
         const role = interaction.guild.roles.cache.get(config.roleId);
         await interaction.editReply({
-            embeds: [EmbedTemplate.info('Verification Config', `**Status:** ${config.enabled ? 'Enabled' : 'Disabled'}\n**Role:** ${role || 'Not found'}`)],
+            embeds: [EmbedTemplate.info('Verification Config', `**Status:** ${config.enabled ? 'Enabled' : 'Disabled'}\n**Role:** ${role || 'Not found'}\n**Mode:** ${config.mode || 'button'}\n**Question:** ${config.humanCheck?.question || 'N/A'}`)],
         });
     },
 };
-

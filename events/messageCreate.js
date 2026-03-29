@@ -72,6 +72,10 @@ module.exports = (client) => {
         const afk = require('../utils/afk');
         await afk.checkAFKMentions(message);
 
+        // Auto responder
+        const autoResponder = require('../utils/autoResponder');
+        await autoResponder.handleAutoResponderMessage(message);
+
         // New enhanced automod system
         const automod = require('../utils/automod');
         const handled = await automod.checkMessage(message);

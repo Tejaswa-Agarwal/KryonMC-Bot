@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 const casesFile = path.join(__dirname, '..', 'data', 'cases.json');
+const ladderFile = path.join(__dirname, '..', 'data', 'punishmentLadder.json');
 
 function loadCases() {
     if (fs.existsSync(casesFile)) {
@@ -105,6 +106,74 @@ function deactivateCase(guildId, caseId) {
     return found;
 }
 
+function addCaseAppeal(guildId, caseId, userId, reason) {
+    const cases = loadCases();
+    if (!cases[guildId]) return false;
+
+    for (const targetId in cases[guildId]) {
+        const caseData = cases[guildId][targetId].find(c => c.caseId === caseId);
+        if (caseData) {
+            caseData.appeal = {
+                userId,
+                reason,
+                status: 'pending',
+                createdAt: Date.now()
+            };
+            saveCases(cases);
+            return true;
+        }
+    }
+    return false;
+}
+
+function reviewCaseAppeal(guildId, caseId, reviewerId, approve, note = '') {
+    const cases = loadCases();
+    if (!cases[guildId]) return false;
+
+    for (const targetId in cases[guildId]) {
+        const caseData = cases[guildId][targetId].find(c => c.caseId === caseId);
+        if (caseData && caseData.appeal) {
+            caseData.appeal.status = approve ? 'approved' : 'rejected';
+            caseData.appeal.reviewedBy = reviewerId;
+            caseData.appeal.reviewedAt = Date.now();
+            caseData.appeal.note = note;
+            if (approve) {
+                caseData.active = false;
+            }
+            saveCases(cases);
+            return true;
+        }
+    }
+    return false;
+}
+
+function loadLadder() {
+    if (fs.existsSync(ladderFile)) {
+        return JSON.parse(fs.readFileSync(ladderFile, 'utf8'));
+    }
+    return {};
+}
+
+function saveLadder(ladder) {
+    fs.writeFileSync(ladderFile, JSON.stringify(ladder, null, 2));
+}
+
+function getPunishmentLadder(guildId) {
+    const all = loadLadder();
+    return all[guildId] || ['warn', 'timeout', 'kick', 'ban'];
+}
+
+function setPunishmentLadder(guildId, steps) {
+    const normalized = (steps || [])
+        .map(s => String(s).trim().toLowerCase())
+        .filter(Boolean)
+        .filter((v, i, arr) => arr.indexOf(v) === i);
+    const all = loadLadder();
+    all[guildId] = normalized.length ? normalized : ['warn', 'timeout', 'kick', 'ban'];
+    saveLadder(all);
+    return all[guildId];
+}
+
 module.exports = {
     createCase,
     getUserCases,
@@ -112,5 +181,9 @@ module.exports = {
     deactivateCase,
     getCaseCount,
     loadCases,
-    saveCases
+    saveCases,
+    addCaseAppeal,
+    reviewCaseAppeal,
+    getPunishmentLadder,
+    setPunishmentLadder
 };

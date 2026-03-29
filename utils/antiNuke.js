@@ -9,11 +9,13 @@ function getAntiNukeConfig(guildId) {
     const all = configStore.get('antiNukeConfig') || {};
     return all[guildId] || {
         enabled: false,
+        preset: 'medium',
         threshold: 3,
         intervalMs: 10000,
         action: 'remove_roles', // remove_roles, kick, ban
         whitelistedUsers: [],
         whitelistedRoles: [],
+        applyToAdmins: false,
     };
 }
 
@@ -157,4 +159,3 @@ module.exports = {
     handleRoleDelete,
     handleRoleCreate,
 };
-

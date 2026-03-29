@@ -8,6 +8,9 @@ const casesPath = path.join(__dirname, '..', '..', 'data', 'cases.json');
 const warningsPath = path.join(__dirname, '..', '..', 'data', 'warnings.json');
 const transcriptsPath = path.join(__dirname, '..', '..', 'data', 'transcripts');
 const BOT_INVITE_PERMISSIONS = '8';
+const { getGuildPerformance } = require('../../utils/performanceTracker');
+const { createGuildBackup, listGuildBackups, restoreGuildBackup } = require('../../utils/guildBackup');
+const { getGuildTags, setGuildTags } = require('../../utils/tags');
 
 function readJson(file, fallback = {}) {
   if (!fs.existsSync(file)) return fallback;
@@ -58,6 +61,8 @@ function getGuildConfigSnapshot(allConfig, guildId) {
     extraOwnersConfig: (allConfig.extraOwnersConfig || {})[guildId] || guildConfig.extraOwnersConfig || {},
     ticketConfig: (allConfig.ticketConfig || {})[guildId] || guildConfig.ticketConfig || {},
     reactionRoleConfig: (allConfig.reactionRoleConfig || {})[guildId] || guildConfig.reactionRoleConfig || {},
+    autoResponderConfig: guildConfig.autoResponderConfig || {},
+    tagsConfig: { tags: getGuildTags(guildId) },
   };
 }
 
@@ -141,6 +146,11 @@ router.post('/guild/:guildId/config', async (req, res) => {
   }
 
   const config = getConfig();
+  if (section === 'tagsConfig') {
+    setGuildTags(guildId, data.tags || {});
+    res.json({ success: true, config: getGuildConfigSnapshot(config, guildId) });
+    return;
+  }
   saveGuildSection(config, guildId, section, data);
 
   saveConfig(config);
@@ -258,6 +268,7 @@ router.get('/guild/:guildId/summary', async (req, res) => {
     const transcriptCount = fs.existsSync(transcriptsPath)
       ? fs.readdirSync(transcriptsPath).filter(file => file.includes(`-${guildId}.txt`)).length
       : 0;
+    const performance = getGuildPerformance(guildId);
 
     res.json({
       guild: {
@@ -288,6 +299,7 @@ router.get('/guild/:guildId/summary', async (req, res) => {
         ticketSupportRoleCount: Array.isArray(ticketCfg.supportRoleIds) ? ticketCfg.supportRoleIds.length : 0,
         suggestionChannelId: suggestionCfg.channelId || null,
         verificationRoleId: verifyCfg.roleId || null,
+        verificationMode: verifyCfg.mode || 'button',
         automodWordCount: Array.isArray(automodConfig.customWords) ? automodConfig.customWords.length : 0,
         automodWhitelistChannelCount: Array.isArray(automodConfig.whitelistedChannels) ? automodConfig.whitelistedChannels.length : 0,
         automodWhitelistRoleCount: Array.isArray(automodConfig.whitelistedRoles) ? automodConfig.whitelistedRoles.length : 0,
@@ -300,7 +312,14 @@ router.get('/guild/:guildId/summary', async (req, res) => {
         securityJoinWindowSec: securityShieldConfig.joinGuard?.windowMs ? Math.round(securityShieldConfig.joinGuard.windowMs / 1000) : 15,
         extraOwnerCount: Array.isArray(extraOwnersConfig.userIds) ? extraOwnersConfig.userIds.length : 0,
         transcriptCount,
+        automodRegexCount: Array.isArray(automodConfig.regexFilters) ? automodConfig.regexFilters.length : 0,
+        automodBlockedDomainCount: Array.isArray(automodConfig.blockedDomains) ? automodConfig.blockedDomains.length : 0,
+        antiNukePreset: antiNukeConfig.preset || 'medium',
+        autoResponderCount: Array.isArray(guildConfig.autoResponderConfig?.responders) ? guildConfig.autoResponderConfig.responders.length : 0,
+        tagsCount: Object.keys(getGuildTags(guildId) || {}).length,
+        roleMenuCount: Object.keys(guildConfig.reactionRoleConfig || {}).length,
       },
+      performance,
     });
   } catch (error) {
     console.error('Dashboard guild summary error:', error);
@@ -351,6 +370,46 @@ router.get('/guild/:guildId/activity', async (req, res) => {
 
   items.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
   res.json({ activity: items.slice(0, limit) });
+});
+
+router.get('/guild/:guildId/backups', async (req, res) => {
+  const { guildId } = req.params;
+  if (!canManageGuild(req.user, guildId)) {
+    res.status(403).json({ error: 'No permission' });
+    return;
+  }
+  const backups = listGuildBackups(guildId).slice(0, 20);
+  res.json({ backups });
+});
+
+router.post('/guild/:guildId/backups/create', async (req, res) => {
+  const { guildId } = req.params;
+  if (!canManageGuild(req.user, guildId)) {
+    res.status(403).json({ error: 'No permission' });
+    return;
+  }
+  const actorId = req.user?.id || null;
+  const backup = createGuildBackup(guildId, actorId);
+  res.json({ success: true, backup });
+});
+
+router.post('/guild/:guildId/backups/restore', async (req, res) => {
+  const { guildId } = req.params;
+  const { backupId } = req.body || {};
+  if (!canManageGuild(req.user, guildId)) {
+    res.status(403).json({ error: 'No permission' });
+    return;
+  }
+  if (!backupId) {
+    res.status(400).json({ error: 'backupId is required' });
+    return;
+  }
+  const restored = restoreGuildBackup(guildId, backupId);
+  if (!restored) {
+    res.status(404).json({ error: 'Backup not found' });
+    return;
+  }
+  res.json({ success: true, restored });
 });
 
 module.exports = router;

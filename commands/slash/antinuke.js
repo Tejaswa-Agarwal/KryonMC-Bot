@@ -17,6 +17,18 @@ module.exports = {
             sub.setName('config')
                 .setDescription('View anti-nuke config'))
         .addSubcommand(sub =>
+            sub.setName('preset')
+                .setDescription('Apply anti-nuke preset profile')
+                .addStringOption(option =>
+                    option.setName('level')
+                        .setDescription('Preset level')
+                        .setRequired(true)
+                        .addChoices(
+                            { name: 'Strict', value: 'strict' },
+                            { name: 'Medium', value: 'medium' },
+                            { name: 'Custom', value: 'custom' }
+                        )))
+        .addSubcommand(sub =>
             sub.setName('settings')
                 .setDescription('Update anti-nuke behavior')
                 .addIntegerOption(option =>
@@ -39,7 +51,11 @@ module.exports = {
                             { name: 'Remove Roles', value: 'remove_roles' },
                             { name: 'Kick', value: 'kick' },
                             { name: 'Ban', value: 'ban' }
-                        )))
+                        ))
+                .addBooleanOption(option =>
+                    option.setName('apply-to-admins')
+                        .setDescription('Apply anti-nuke to administrators')
+                        .setRequired(false)))
         .addSubcommand(sub =>
             sub.setName('whitelist-user')
                 .setDescription('Add/remove user from anti-nuke whitelist')
@@ -87,20 +103,45 @@ module.exports = {
             const threshold = interaction.options.getInteger('threshold');
             const intervalSeconds = interaction.options.getInteger('interval-seconds');
             const action = interaction.options.getString('action');
+            const applyToAdmins = interaction.options.getBoolean('apply-to-admins');
 
             setAntiNukeConfig(guildId, {
                 ...config,
                 threshold: threshold ?? config.threshold,
                 intervalMs: intervalSeconds ? intervalSeconds * 1000 : config.intervalMs,
                 action: action ?? config.action,
+                applyToAdmins: applyToAdmins ?? config.applyToAdmins,
             });
 
             const next = getAntiNukeConfig(guildId);
             await interaction.editReply({
                 embeds: [EmbedTemplate.success(
                     'Anti-Nuke Updated',
-                    `**Threshold:** ${next.threshold}\n**Window:** ${Math.round(next.intervalMs / 1000)}s\n**Action:** ${next.action}`
-                )],
+                        `**Threshold:** ${next.threshold}\n**Window:** ${Math.round(next.intervalMs / 1000)}s\n**Action:** ${next.action}`
+                    )],
+            });
+            return;
+        }
+
+        if (sub === 'preset') {
+            const level = interaction.options.getString('level');
+            const presets = {
+                strict: { preset: 'strict', threshold: 2, intervalMs: 8000, action: 'ban', applyToAdmins: true },
+                medium: { preset: 'medium', threshold: 3, intervalMs: 10000, action: 'kick', applyToAdmins: false },
+                custom: { preset: 'custom' }
+            };
+
+            const selected = presets[level];
+            setAntiNukeConfig(guildId, {
+                ...config,
+                ...(selected || {}),
+            });
+            const next = getAntiNukeConfig(guildId);
+            await interaction.editReply({
+                embeds: [EmbedTemplate.success(
+                    'Anti-Nuke Preset Applied',
+                    `**Preset:** ${next.preset || 'custom'}\n**Threshold:** ${next.threshold}\n**Window:** ${Math.round(next.intervalMs / 1000)}s\n**Action:** ${next.action}\n**Apply to admins:** ${next.applyToAdmins ? 'yes' : 'no'}`
+                )]
             });
             return;
         }
@@ -134,9 +175,8 @@ module.exports = {
         await interaction.editReply({
             embeds: [EmbedTemplate.info(
                 'Anti-Nuke Configuration',
-                `**Status:** ${config.enabled ? 'Enabled' : 'Disabled'}\n**Threshold:** ${config.threshold}\n**Window:** ${Math.round(config.intervalMs / 1000)}s\n**Action:** ${config.action}\n**Whitelisted Users:** ${(config.whitelistedUsers || []).length}\n**Whitelisted Roles:** ${(config.whitelistedRoles || []).length}`
+                `**Status:** ${config.enabled ? 'Enabled' : 'Disabled'}\n**Preset:** ${config.preset || 'custom'}\n**Threshold:** ${config.threshold}\n**Window:** ${Math.round(config.intervalMs / 1000)}s\n**Action:** ${config.action}\n**Apply to admins:** ${config.applyToAdmins ? 'yes' : 'no'}\n**Whitelisted Users:** ${(config.whitelistedUsers || []).length}\n**Whitelisted Roles:** ${(config.whitelistedRoles || []).length}`
             )],
         });
     },
 };
-

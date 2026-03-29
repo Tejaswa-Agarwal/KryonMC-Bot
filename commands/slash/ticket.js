@@ -32,7 +32,11 @@ module.exports = {
                 .addUserOption(option =>
                     option.setName('user')
                         .setDescription('User to remove')
-                        .setRequired(true))),
+                        .setRequired(true)))
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('claim')
+                .setDescription('Claim the current ticket')),
     async execute(interaction) {
         const subcommand = interaction.options.getSubcommand();
 
@@ -80,6 +84,32 @@ module.exports = {
 
             await interaction.editReply({ content: '🔒 Closing ticket...' });
             await closeTicket(interaction.channel, interaction.user);
+        } else if (subcommand === 'claim') {
+            const { claimTicket, getTicketConfig } = require('../../utils/ticketManager');
+            const { hasModeratorPermission } = require('../../utils/permissions');
+            if (!hasModeratorPermission(interaction.member, interaction.guild.id, interaction.user.id, interaction.guild.ownerId)) {
+                await interaction.editReply({
+                    content: '❌ Only moderators can claim tickets.',
+                    ephemeral: true
+                });
+                return;
+            }
+
+            const config = getTicketConfig(interaction.guild.id);
+            if (!config || !config.openTickets || !config.openTickets[interaction.channel.id]) {
+                await interaction.editReply({
+                    content: '❌ This command can only be used in a ticket channel.',
+                    ephemeral: true
+                });
+                return;
+            }
+
+            const result = await claimTicket(interaction.channel, interaction.user);
+            if (!result.success) {
+                await interaction.editReply({ content: `❌ ${result.error}`, ephemeral: true });
+                return;
+            }
+            await interaction.editReply({ content: `✅ Ticket claimed by ${interaction.user}.` });
         } else if (subcommand === 'add') {
             const { addUserToTicket, getTicketConfig } = require('../../utils/ticketManager');
             const { hasModeratorPermission } = require('../../utils/permissions');

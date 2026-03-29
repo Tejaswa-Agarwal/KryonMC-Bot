@@ -9,7 +9,7 @@ const HELP_MODULES = {
             'ban', 'unban', 'kick', 'timeout', 'warn', 'warnings',
             'removewarn', 'clearwarns', 'cases', 'removecase',
             'purge', 'slowmode', 'lock', 'unlock', 'setnick',
-            'snipe', 'editsnipe'
+            'snipe', 'editsnipe', 'appeal'
         ]
     },
     security: {
@@ -40,7 +40,7 @@ const HELP_MODULES = {
         label: 'Admin',
         emoji: '🧠',
         description: 'Administrative and control commands.',
-        commands: ['announce', 'command', 'logging', 'setbotname', 'setbotavatar']
+        commands: ['announce', 'command', 'logging', 'setbotname', 'setbotavatar', 'backup', 'ladder']
     },
     fun: {
         label: 'Fun',
