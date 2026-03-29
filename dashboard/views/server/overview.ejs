@@ -4,23 +4,27 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= guild.name %> · Axion</title>
+  <link rel="icon" type="image/png" href="/img/axion-logo.png">
   <link rel="stylesheet" href="/css/main.css">
 </head>
 <body>
   <main class="container layout">
     <aside class="sidebar">
       <div class="logo-wrap">
-        <img class="logo" src="/img/axion-logo.png" onerror="this.onerror=null;this.src='/img/axion-logo.svg';" alt="Axion">
-        <div>
-          <div class="brand-title">AXION</div>
-          <div class="brand-sub"><%= guild.name %></div>
+        <div class="logo-left">
+          <img class="logo" src="/img/axion-logo.png" onerror="this.onerror=null;this.src='/img/axion-logo.svg';" alt="Axion">
+          <div class="brand-text">
+            <div class="brand-title">AXION</div>
+            <div class="brand-sub"><%= guild.name %></div>
+          </div>
         </div>
+        <button class="icon-btn" data-sidebar-toggle>☰</button>
       </div>
       <nav class="nav">
-        <a class="nav-link" href="/dashboard">🏠 Servers</a>
-        <a class="nav-link active" href="#">⚙️ Config</a>
+        <a class="nav-link" href="/dashboard"><i>🏠</i><span>Servers</span></a>
+        <a class="nav-link active" href="#"><i>⚙️</i><span>Config</span></a>
       </nav>
-      <div style="margin-top:12px;" class="theme-picker">
+      <div class="theme-picker">
         <button class="theme-btn" data-theme="default">Default</button>
         <button class="theme-btn" data-theme="neon">Neon</button>
         <button class="theme-btn" data-theme="sunset">Sunset</button>
@@ -31,67 +35,70 @@
     <section class="main">
       <section class="hero">
         <h1><%= guild.name %> Configuration</h1>
-        <p>Fast controls for Axion modules.</p>
+        <p>Module tabs, live saves, and premium controls.</p>
         <div class="actions"><a class="btn secondary" href="/dashboard">Back</a></div>
       </section>
 
-      <div class="grid cols-2">
-        <section class="card">
-          <h2>Role Configuration</h2>
-          <label>Moderator Role ID</label><input id="moderatorRoleId" type="text" placeholder="123456789012345678" />
-          <label>Admin Role ID</label><input id="adminRoleId" type="text" placeholder="123456789012345678" />
-          <button class="btn" onclick="saveSection('roleConfig', { moderatorRoleId: val('moderatorRoleId'), adminRoleId: val('adminRoleId') })">Save Roles</button>
-        </section>
+      <section class="card">
+        <h2>Modules</h2>
+        <div class="tab-row" data-tab-group="modules">
+          <button class="tab-btn active" data-tab-group="modules" data-tab-btn="roles">Roles</button>
+          <button class="tab-btn" data-tab-group="modules" data-tab-btn="welcomer">Welcomer</button>
+          <button class="tab-btn" data-tab-group="modules" data-tab-btn="starboard">Starboard</button>
+          <button class="tab-btn" data-tab-group="modules" data-tab-btn="automod">Automod</button>
+          <button class="tab-btn" data-tab-group="modules" data-tab-btn="logging">Logging</button>
+        </div>
+      </section>
 
-        <section class="card">
-          <h2>Welcomer</h2>
-          <label>Enabled</label><select id="welcomerEnabled"><option value="true">true</option><option value="false">false</option></select>
-          <label>Channel ID</label><input id="welcomerChannelId" type="text" placeholder="123456789012345678" />
-          <label>Message</label><textarea id="welcomerMessage" rows="3" placeholder="Welcome {user} to {server}!"></textarea>
-          <button class="btn" onclick="saveSection('welcomerConfig', { enabled: boolVal('welcomerEnabled'), channelId: val('welcomerChannelId'), message: val('welcomerMessage') })">Save Welcomer</button>
-        </section>
+      <section class="card tab-panel active" data-tab-group="modules" data-tab-panel="roles">
+        <h2>Role Configuration</h2>
+        <label>Moderator Role ID</label><input id="moderatorRoleId" type="text" placeholder="123456789012345678" />
+        <label>Admin Role ID</label><input id="adminRoleId" type="text" placeholder="123456789012345678" />
+        <button class="btn" onclick="handleSave(this,'roleConfig',{ moderatorRoleId: val('moderatorRoleId'), adminRoleId: val('adminRoleId') })">Save Roles</button>
+      </section>
 
-        <section class="card">
-          <h2>Starboard</h2>
-          <label>Enabled</label><select id="starboardEnabled"><option value="true">true</option><option value="false">false</option></select>
-          <label>Channel ID</label><input id="starboardChannelId" type="text" placeholder="123456789012345678" />
-          <label>Threshold</label><input id="starboardThreshold" type="number" min="1" max="20" value="3" />
-          <button class="btn" onclick="saveSection('starboardConfig', { enabled: boolVal('starboardEnabled'), channelId: val('starboardChannelId'), threshold: numVal('starboardThreshold') })">Save Starboard</button>
-        </section>
+      <section class="card tab-panel" data-tab-group="modules" data-tab-panel="welcomer">
+        <h2>Welcomer</h2>
+        <label>Enabled</label><select id="welcomerEnabled"><option value="true">true</option><option value="false">false</option></select>
+        <label>Channel ID</label><input id="welcomerChannelId" type="text" placeholder="123456789012345678" />
+        <label>Message</label><textarea id="welcomerMessage" rows="3" placeholder="Welcome {user} to {server}!"></textarea>
+        <button class="btn" onclick="handleSave(this,'welcomerConfig',{ enabled: boolVal('welcomerEnabled'), channelId: val('welcomerChannelId'), message: val('welcomerMessage') })">Save Welcomer</button>
+      </section>
 
-        <section class="card">
-          <h2>Automod</h2>
-          <label>Enabled</label><select id="automodEnabled"><option value="true">true</option><option value="false">false</option></select>
-          <button class="btn" onclick="saveSection('automodConfig', { enabled: boolVal('automodEnabled') })">Save Automod</button>
-        </section>
+      <section class="card tab-panel" data-tab-group="modules" data-tab-panel="starboard">
+        <h2>Starboard</h2>
+        <label>Enabled</label><select id="starboardEnabled"><option value="true">true</option><option value="false">false</option></select>
+        <label>Channel ID</label><input id="starboardChannelId" type="text" placeholder="123456789012345678" />
+        <label>Threshold</label><input id="starboardThreshold" type="number" min="1" max="20" value="3" />
+        <button class="btn" onclick="handleSave(this,'starboardConfig',{ enabled: boolVal('starboardEnabled'), channelId: val('starboardChannelId'), threshold: numVal('starboardThreshold') })">Save Starboard</button>
+      </section>
 
-        <section class="card">
-          <h2>Logging</h2>
-          <label>Moderation Log Channel ID</label><input id="modLog" type="text" placeholder="123456789012345678" />
-          <label>Message Log Channel ID</label><input id="messageLog" type="text" placeholder="123456789012345678" />
-          <button class="btn" onclick="saveSection('logConfig', { modLog: val('modLog'), messageLog: val('messageLog') })">Save Logging</button>
-        </section>
-      </div>
+      <section class="card tab-panel" data-tab-group="modules" data-tab-panel="automod">
+        <h2>Automod</h2>
+        <label>Enabled</label><select id="automodEnabled"><option value="true">true</option><option value="false">false</option></select>
+        <button class="btn" onclick="handleSave(this,'automodConfig',{ enabled: boolVal('automodEnabled') })">Save Automod</button>
+      </section>
 
-      <div id="status" class="card status"></div>
+      <section class="card tab-panel" data-tab-group="modules" data-tab-panel="logging">
+        <h2>Logging</h2>
+        <label>Moderation Log Channel ID</label><input id="modLog" type="text" placeholder="123456789012345678" />
+        <label>Message Log Channel ID</label><input id="messageLog" type="text" placeholder="123456789012345678" />
+        <button class="btn" onclick="handleSave(this,'logConfig',{ modLog: val('modLog'), messageLog: val('messageLog') })">Save Logging</button>
+      </section>
     </section>
   </main>
 
   <script src="/js/theme.js"></script>
+  <script src="/js/ui.js"></script>
   <script>
     const guildId = '<%= guild.id %>';
-    const statusBox = document.getElementById('status');
 
     function val(id) { return document.getElementById(id).value.trim(); }
     function boolVal(id) { return document.getElementById(id).value === 'true'; }
     function numVal(id) { return Number(document.getElementById(id).value); }
-    function setStatus(ok, text) {
-      statusBox.style.display = 'block';
-      statusBox.className = 'card status ' + (ok ? 'ok' : 'warning');
-      statusBox.textContent = text;
-    }
 
-    async function saveSection(section, data) {
+    async function handleSave(btn, section, data) {
+      window.axionSetSaving(btn, true);
       try {
         const res = await fetch(`/api/guild/${guildId}/config`, {
           method: 'POST',
@@ -100,9 +107,11 @@
         });
         const payload = await res.json();
         if (!res.ok) throw new Error(payload.error || 'Save failed');
-        setStatus(true, `${section} saved successfully.`);
+        window.axionToast(`${section} saved`, 'ok');
       } catch (err) {
-        setStatus(false, err.message);
+        window.axionToast(err.message, 'danger');
+      } finally {
+        window.axionSetSaving(btn, false);
       }
     }
 
@@ -132,7 +141,7 @@
           document.getElementById('messageLog').value = cfg.logConfig.messageLog || '';
         }
       } catch (_err) {
-        setStatus(false, 'Failed to load configuration.');
+        window.axionToast('Failed to load configuration', 'warning');
       }
     }
 

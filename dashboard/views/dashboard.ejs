@@ -4,45 +4,57 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Axion Dashboard</title>
+  <link rel="icon" type="image/png" href="/img/axion-logo.png">
   <link rel="stylesheet" href="/css/main.css">
 </head>
 <body>
   <main class="container layout">
     <aside class="sidebar">
       <div class="logo-wrap">
-        <img class="logo" src="/img/axion-logo.png" onerror="this.onerror=null;this.src='/img/axion-logo.svg';" alt="Axion">
-        <div>
-          <div class="brand-title">AXION</div>
-          <div class="brand-sub">Welcome, <%= user.username %></div>
+        <div class="logo-left">
+          <img class="logo" src="/img/axion-logo.png" onerror="this.onerror=null;this.src='/img/axion-logo.svg';" alt="Axion">
+          <div class="brand-text">
+            <div class="brand-title">AXION</div>
+            <div class="brand-sub">Welcome, <%= user.username %></div>
+          </div>
         </div>
+        <button class="icon-btn" data-sidebar-toggle>☰</button>
       </div>
       <nav class="nav">
-        <a class="nav-link active" href="/dashboard">🏠 Servers</a>
-        <a class="nav-link" href="/">✨ Home</a>
-        <a class="nav-link" href="/logout">🚪 Logout</a>
+        <a class="nav-link active" href="/dashboard"><i>🏠</i><span>Servers</span></a>
+        <a class="nav-link" href="/"><i>✨</i><span>Home</span></a>
+        <a class="nav-link" href="/logout"><i>🚪</i><span>Logout</span></a>
       </nav>
-      <div style="margin-top:12px;" class="theme-picker">
+      <div class="theme-picker">
         <button class="theme-btn" data-theme="default">Default</button>
         <button class="theme-btn" data-theme="neon">Neon</button>
         <button class="theme-btn" data-theme="sunset">Sunset</button>
         <button class="theme-btn" data-theme="emerald">Emerald</button>
       </div>
+      <div class="sidebar-footer">Axion UI vNext</div>
     </aside>
 
     <section class="main">
       <section class="hero">
         <h1>Server Management</h1>
-        <p>Choose a server to open the Axion control panel.</p>
+        <p>Choose a server to open Axion’s full control panel.</p>
       </section>
 
       <% if (typeof noAuthMode !== 'undefined' && noAuthMode) { %>
         <div class="card warning">⚠️ NO_AUTH mode enabled. Anyone with URL access can manage settings.</div>
       <% } %>
 
+      <section class="grid cols-3">
+        <div class="card"><h3>Total Servers</h3><div class="metric" id="stat-total">0</div></div>
+        <div class="card"><h3>Connected</h3><div class="metric" id="stat-connected">0</div></div>
+        <div class="card"><h3>Pending Invite</h3><div class="metric" id="stat-pending">0</div></div>
+      </section>
+
       <div id="guilds">Loading...</div>
     </section>
   </main>
   <script src="/js/theme.js"></script>
+  <script src="/js/ui.js"></script>
   <script src="/js/dashboard.js"></script>
 </body>
 </html>
