@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const { sendModLog } = require('../../utils/modLog');
 const { createCase } = require('../../utils/caseManager');
+const EmbedTemplate = require('../../utils/embedTemplate');
 
 const warningsFile = path.join(__dirname, '..', '..', 'data', 'warnings.json');
 
@@ -32,11 +33,25 @@ module.exports = {
         .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
     async execute(interaction) {
         if (!interaction.guild) {
-            return interaction.editReply({ content: 'This command can only be used in a server.', ephemeral: true });
+            const embed = EmbedTemplate.error('Error', 'This command can only be used in a server.');
+            return interaction.editReply({ embeds: [embed], ephemeral: true });
         }
 
         const user = interaction.options.getUser('user');
         const reason = interaction.options.getString('reason');
+
+        // Check if trying to warn self
+        if (user.id === interaction.user.id) {
+            const embed = EmbedTemplate.error('Cannot Warn Self', 'You cannot warn yourself!');
+            return interaction.editReply({ embeds: [embed], ephemeral: true });
+        }
+
+        // Check if trying to warn bot
+        if (user.id === interaction.client.user.id) {
+            const embed = EmbedTemplate.error('Cannot Warn Bot', 'You cannot warn me!');
+            return interaction.editReply({ embeds: [embed], ephemeral: true });
+        }
+
         const warnings = loadWarnings();
 
         const guildId = interaction.guild.id;
@@ -58,19 +73,6 @@ module.exports = {
 
         const warnCount = warnings[guildId][userId].length;
 
-        const embed = new EmbedBuilder()
-            .setTitle('⚠️ User Warned')
-            .setColor(0xF39C12)
-            .addFields(
-                { name: '👤 User', value: `${user.tag} (${user.id})`, inline: true },
-                { name: '👮 Moderator', value: interaction.user.tag, inline: true },
-                { name: '📊 Total Warnings', value: `\`${warnCount}\``, inline: true },
-                { name: '📝 Reason', value: reason, inline: false }
-            )
-            .setThumbnail(user.displayAvatarURL())
-            .setFooter({ text: `Warning ID: ${warning.id}` })
-            .setTimestamp();
-
         // Create case entry
         const caseId = createCase(
             guildId,
@@ -81,18 +83,27 @@ module.exports = {
             reason
         );
 
-        // Add case ID to embed
-        embed.setFooter({ text: `Warning ID: ${warning.id} | Case #${caseId}` });
+        // Send success embed
+        const embed = EmbedTemplate.modAction('warn', interaction.user, user, reason, caseId);
+        embed.addFields(
+            { name: '⚠️ Total Warnings', value: `${warnCount}`, inline: true },
+            { name: '🆔 Warning ID', value: `\`${warning.id}\``, inline: true }
+        );
 
         await interaction.editReply({ embeds: [embed] });
 
-        // Send to mod log
-        await sendModLog(interaction.guild, 'warn', interaction.user, user, reason, { '📊 Total Warnings': warnCount });
-
+        // Try to DM user
         try {
-            await user.send({ embeds: [embed] });
+            const dmEmbed = EmbedTemplate.warning(
+                'You have been warned',
+                `**Server:** ${interaction.guild.name}\n**Reason:** ${reason}\n**Warned by:** ${interaction.user.tag}\n\n**Total Warnings:** ${warnCount}`
+            );
+            await user.send({ embeds: [dmEmbed] });
         } catch (error) {
             console.log('Could not DM user about warning');
         }
+
+        // Send to mod log
+        await sendModLog(interaction.guild, 'warn', interaction.user, user, reason, { '📊 Total Warnings': warnCount });
     }
 };
