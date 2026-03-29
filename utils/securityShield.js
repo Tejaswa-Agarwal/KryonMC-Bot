@@ -1,6 +1,7 @@
 const { EmbedBuilder } = require('discord.js');
 const configStore = require('../configStore');
 const { getLogConfig } = require('./logger');
+const { recordIncident } = require('./incidentTracker');
 
 const joinTracker = new Map();
 
@@ -94,6 +95,14 @@ async function handleMemberJoin(member) {
                 `Rapid joins detected: **${count}** joins in ${Math.round((config.joinGuard.windowMs || 15000) / 1000)}s.\nLatest member: ${member.user.tag} (\`${member.id}\`)`,
                 0xEF4444
             );
+            recordIncident(member.guild.id, {
+                type: 'security',
+                severity: 'high',
+                source: 'join-guard',
+                userId: member.id,
+                details: `joins=${count}`,
+                response: config.joinGuard.action
+            });
         }
     }
 
@@ -115,6 +124,14 @@ async function handleMemberJoin(member) {
                 `User: ${member.user.tag} (\`${member.id}\`)\nAccount age: **${ageDays}d**\nAction: **${result}**`,
                 result === 'kicked' ? 0xEF4444 : 0xF59E0B
             );
+            recordIncident(member.guild.id, {
+                type: 'security',
+                severity: result === 'kicked' ? 'high' : 'medium',
+                source: 'anti-alt',
+                userId: member.id,
+                details: `ageDays=${ageDays}`,
+                response: result
+            });
         }
     }
 
@@ -126,4 +143,3 @@ module.exports = {
     setSecurityConfig,
     handleMemberJoin,
 };
-

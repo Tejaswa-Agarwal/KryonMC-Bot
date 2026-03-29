@@ -38,6 +38,11 @@ module.exports = {
                 .setName('claim')
                 .setDescription('Claim the current ticket')),
     async execute(interaction) {
+        if (!interaction.guild) {
+            await interaction.editReply({ content: '❌ This command can only be used in a server.', ephemeral: true });
+            return;
+        }
+
         const subcommand = interaction.options.getSubcommand();
 
         if (subcommand === 'create') {

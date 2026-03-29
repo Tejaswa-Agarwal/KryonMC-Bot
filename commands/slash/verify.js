@@ -55,6 +55,23 @@ module.exports = {
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
     async execute(interaction) {
+        if (!interaction.guild) {
+            await interaction.editReply({
+                embeds: [EmbedTemplate.error('Server Only', 'This command can only be used in a server.')],
+                ephemeral: true
+            });
+            return;
+        }
+
+        const { hasAdminPermission } = require('../../utils/permissions');
+        if (!hasAdminPermission(interaction.member, interaction.guild.id, interaction.user.id, interaction.guild.ownerId)) {
+            await interaction.editReply({
+                embeds: [EmbedTemplate.error('No Permission', 'Only admins can configure verification.')],
+                ephemeral: true
+            });
+            return;
+        }
+
         const sub = interaction.options.getSubcommand();
         const guildId = interaction.guild.id;
 

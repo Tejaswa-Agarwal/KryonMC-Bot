@@ -2,6 +2,7 @@ const { AuditLogEvent, EmbedBuilder, PermissionsBitField } = require('discord.js
 const configStore = require('../configStore');
 const { BOT_OWNER_ID } = require('./permissions');
 const { getLogConfig } = require('./logger');
+const { recordIncident } = require('./incidentTracker');
 
 const actionTracker = new Map();
 
@@ -121,6 +122,14 @@ async function enforceAntiNuke(guild, executorId, actionLabel) {
         '🛡️ Anti-Nuke Triggered',
         `**Executor:** ${tag} (\`${executorId}\`)\n**Detected:** ${actionLabel}\n**Actions in window:** ${count}\n**Response:** ${result.detail}`
     );
+    recordIncident(guild.id, {
+        type: 'antinuke',
+        severity: result.ok ? 'high' : 'medium',
+        source: actionLabel,
+        executorId,
+        response: result.detail,
+        actionsInWindow: count
+    });
 }
 
 async function getExecutorIdFromAudit(guild, type) {

@@ -1,4 +1,5 @@
 const configStore = require('../configStore');
+const { recordIncident } = require('./incidentTracker');
 
 function getAutomodConfig(guildId) {
     const config = configStore.get('automodConfig') || {};
@@ -246,6 +247,14 @@ async function checkMessage(message) {
     for (const result of checks) {
         if (result) {
             await applyPunishment(message, result, config);
+            recordIncident(message.guild.id, {
+                type: 'automod',
+                severity: config.punishment === 'ban' || config.punishment === 'kick' ? 'high' : 'medium',
+                source: 'message-check',
+                userId: message.author.id,
+                details: result,
+                response: config.punishment || 'warn'
+            });
             return true;
         }
     }

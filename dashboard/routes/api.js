@@ -11,6 +11,7 @@ const BOT_INVITE_PERMISSIONS = '8';
 const { getGuildPerformance } = require('../../utils/performanceTracker');
 const { createGuildBackup, listGuildBackups, restoreGuildBackup } = require('../../utils/guildBackup');
 const { getGuildTags, setGuildTags } = require('../../utils/tags');
+const { getGuildIncidents, getIncidentStats } = require('../../utils/incidentTracker');
 
 function readJson(file, fallback = {}) {
   if (!fs.existsSync(file)) return fallback;
@@ -269,6 +270,7 @@ router.get('/guild/:guildId/summary', async (req, res) => {
       ? fs.readdirSync(transcriptsPath).filter(file => file.includes(`-${guildId}.txt`)).length
       : 0;
     const performance = getGuildPerformance(guildId);
+    const incidentStats = getIncidentStats(guildId);
 
     res.json({
       guild: {
@@ -320,6 +322,7 @@ router.get('/guild/:guildId/summary', async (req, res) => {
         roleMenuCount: Object.keys(guildConfig.reactionRoleConfig || {}).length,
       },
       performance,
+      incidents: incidentStats,
     });
   } catch (error) {
     console.error('Dashboard guild summary error:', error);
@@ -335,6 +338,8 @@ router.get('/guild/:guildId/activity', async (req, res) => {
   }
 
   const limit = Math.min(Number(req.query.limit || 20), 50);
+  const actionFilter = String(req.query.action || '').toLowerCase();
+  const typeFilter = String(req.query.type || '').toLowerCase();
   const cases = readJson(casesPath, {});
   const warnings = readJson(warningsPath, {});
 
@@ -368,8 +373,36 @@ router.get('/guild/:guildId/activity', async (req, res) => {
     });
   });
 
-  items.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-  res.json({ activity: items.slice(0, limit) });
+  let filtered = items;
+  if (typeFilter) {
+    filtered = filtered.filter(item => String(item.type || '').toLowerCase() === typeFilter);
+  }
+  if (actionFilter) {
+    filtered = filtered.filter(item => String(item.action || '').toLowerCase() === actionFilter);
+  }
+
+  filtered.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+  res.json({ activity: filtered.slice(0, limit) });
+});
+
+router.get('/guild/:guildId/incidents', async (req, res) => {
+  const { guildId } = req.params;
+  if (!canManageGuild(req.user, guildId)) {
+    res.status(403).json({ error: 'No permission' });
+    return;
+  }
+  const limit = Math.min(Number(req.query.limit || 25), 100);
+  const typeFilter = String(req.query.type || '').toLowerCase();
+  const severityFilter = String(req.query.severity || '').toLowerCase();
+
+  let incidents = getGuildIncidents(guildId, 500);
+  if (typeFilter) {
+    incidents = incidents.filter(item => String(item.type || '').toLowerCase() === typeFilter);
+  }
+  if (severityFilter) {
+    incidents = incidents.filter(item => String(item.severity || '').toLowerCase() === severityFilter);
+  }
+  res.json({ incidents: incidents.slice(0, limit) });
 });
 
 router.get('/guild/:guildId/backups', async (req, res) => {

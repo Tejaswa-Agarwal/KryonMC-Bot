@@ -250,7 +250,40 @@
 
       <section class="card">
         <h2>Recent Activity</h2>
+        <label>Activity Type</label>
+        <select id="activityTypeFilter" onchange="loadFeeds()">
+          <option value="">all</option>
+          <option value="case">case</option>
+          <option value="warning">warning</option>
+        </select>
+        <label>Activity Action</label>
+        <select id="activityActionFilter" onchange="loadFeeds()">
+          <option value="">all</option>
+          <option value="warn">warn</option>
+          <option value="timeout">timeout</option>
+          <option value="kick">kick</option>
+          <option value="ban">ban</option>
+        </select>
         <div id="activity-feed" class="grid"></div>
+      </section>
+
+      <section class="card">
+        <h2>Security Incident Timeline</h2>
+        <label>Incident Type</label>
+        <select id="incidentTypeFilter" onchange="loadFeeds()">
+          <option value="">all</option>
+          <option value="automod">automod</option>
+          <option value="security">security</option>
+          <option value="antinuke">antinuke</option>
+        </select>
+        <label>Incident Severity</label>
+        <select id="incidentSeverityFilter" onchange="loadFeeds()">
+          <option value="">all</option>
+          <option value="high">high</option>
+          <option value="medium">medium</option>
+          <option value="low">low</option>
+        </select>
+        <div id="incident-feed" class="grid"></div>
       </section>
     </section>
   </main>
@@ -585,24 +618,36 @@
         `<div class="card"><h3>Avg Latency</h3><p class="muted">${totals.avgMs || 0} ms</p></div>`,
         `<div class="card"><h3>Total Commands</h3><p class="muted">${totals.count || 0}</p></div>`,
         `<div class="card"><h3>Failures</h3><p class="muted">${totals.failed || 0} (recent: ${recentFail})</p></div>`,
-        `<div class="card"><h3>Slowest Commands</h3><p class="muted">${topSlow}</p></div>`
+        `<div class="card"><h3>Slowest Commands</h3><p class="muted">${topSlow}</p></div>`,
+        `<div class="card"><h3>Incidents</h3><p class="muted">Total ${summary.incidents?.total || 0} • High ${summary.incidents?.high || 0}</p></div>`
       ].join('');
+    }
+
+    function renderIncidents(items) {
+      const box = document.getElementById('incident-feed');
+      if (!box) return;
+      if (!items.length) {
+        box.innerHTML = '<div class="card"><p class="muted">No incidents recorded yet.</p></div>';
+        return;
+      }
+      box.innerHTML = items.map(i => {
+        const when = i.timestamp ? new Date(i.timestamp).toLocaleString() : 'Unknown';
+        return `<div class="card"><h3>${(i.type || 'incident').toUpperCase()} • ${i.source || 'event'}</h3><p class="muted">Severity: ${i.severity || 'medium'} • User: ${i.userId || i.executorId || 'N/A'}</p><p>${i.details || i.response || 'No details'}</p><p class="muted">${when}</p></div>`;
+      }).join('');
     }
 
     async function loadAll() {
       try {
-        const [metaRes, cfgRes, statsRes, activityRes, summaryRes] = await Promise.all([
+        const [metaRes, cfgRes, statsRes, summaryRes] = await Promise.all([
           fetch(`/api/guild/${guildId}/meta`),
           fetch(`/api/guild/${guildId}/config`),
           fetch(`/api/guild/${guildId}/stats`),
-          fetch(`/api/guild/${guildId}/activity?limit=12`),
           fetch(`/api/guild/${guildId}/summary`),
         ]);
 
         const meta = await metaRes.json();
         const cfg = await cfgRes.json();
         const stats = await statsRes.json();
-        const activity = await activityRes.json();
         const summary = await summaryRes.json();
 
         const roles = meta.roles || [];
@@ -670,12 +715,31 @@
         document.getElementById('stat-tickets').textContent = stats.openTickets || 0;
 
         renderChart(stats.caseTypeCounts || {});
-        renderActivity(activity.activity || []);
         renderHealth(summary || {});
         renderPerformance(summary || {});
         await loadBackups();
+        await loadFeeds();
       } catch (_err) {
         window.axionToast('Failed to load dashboard data', 'warning');
+      }
+    }
+
+    async function loadFeeds() {
+      try {
+        const activityType = encodeURIComponent(val('activityTypeFilter') || '');
+        const activityAction = encodeURIComponent(val('activityActionFilter') || '');
+        const incidentType = encodeURIComponent(val('incidentTypeFilter') || '');
+        const incidentSeverity = encodeURIComponent(val('incidentSeverityFilter') || '');
+        const [activityRes, incidentsRes] = await Promise.all([
+          fetch(`/api/guild/${guildId}/activity?limit=12&type=${activityType}&action=${activityAction}`),
+          fetch(`/api/guild/${guildId}/incidents?limit=12&type=${incidentType}&severity=${incidentSeverity}`),
+        ]);
+        const activity = await activityRes.json();
+        const incidents = await incidentsRes.json();
+        renderActivity(activity.activity || []);
+        renderIncidents(incidents.incidents || []);
+      } catch (_err) {
+        window.axionToast('Failed to load activity feeds', 'warning');
       }
     }
 
